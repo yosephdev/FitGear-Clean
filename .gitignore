@@ -1,0 +1,24 @@
+# Python files
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.env
+*venv
+
+# Django static and media files
+/static/
+/media/
+
+# Environment variables
+.env
+
+# Django migrations
+**/migrations/
+
+# VS Code
+.vscode/
+
+# Byte-compiled / optimized / DLL files
+*.pyc
+*.pyo
+*.pyd

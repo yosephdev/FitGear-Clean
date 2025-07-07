@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { productsAPI, formatPrice } from '../services/api';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 import { useAuth } from '../context/AuthContext';
+import ReviewSection from '../components/ReviewSection';
 import {
   StarIcon,
   HeartIcon,
@@ -11,7 +13,7 @@ import {
   ShieldCheckIcon,
   ArrowLeftIcon,
 } from '@heroicons/react/24/outline';
-import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
+import { StarIcon as StarIconSolid, HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
 
 const ProductDetail = () => {

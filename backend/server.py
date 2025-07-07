@@ -273,16 +273,7 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     except jwt.JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-# Enhanced error handling
-@app.exception_handler(ValueError)
-async def value_error_handler(request: Request, exc: ValueError):
-    logger.error(f"ValueError in {request.url.path}: {str(exc)}")
-    return {"error": str(exc)}, 400
-
-@app.exception_handler(Exception)
-async def general_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Unexpected error in {request.url.path}: {str(exc)}")
-    return {"error": "Internal server error"}, 500
+# Enhanced error handling will be added later
 
 # API Routes
 

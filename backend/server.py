@@ -51,34 +51,6 @@ app = FastAPI(
 request_counts = defaultdict(lambda: defaultdict(int))
 request_times = defaultdict(lambda: defaultdict(list))
 
-# Rate limiting middleware
-@app.middleware("http")
-async def rate_limit_middleware(request: Request, call_next):
-    client_ip = request.client.host
-    current_time = time.time()
-    
-    # Clean old requests (older than 1 minute)
-    request_times[client_ip] = {
-        endpoint: [t for t in times if current_time - t < 60]
-        for endpoint, times in request_times[client_ip].items()
-    }
-    
-    # Check rate limit
-    endpoint = request.url.path
-    max_requests = int(os.getenv("MAX_REQUESTS_PER_MINUTE", "100"))
-    
-    if len(request_times[client_ip][endpoint]) >= max_requests:
-        raise HTTPException(
-            status_code=429,
-            detail="Rate limit exceeded. Please try again later."
-        )
-    
-    # Add current request
-    request_times[client_ip][endpoint].append(current_time)
-    
-    response = await call_next(request)
-    return response
-
 # Security middleware
 app.add_middleware(
     TrustedHostMiddleware,

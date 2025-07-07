@@ -82,6 +82,17 @@ export const blogAPI = {
   deletePost: (id) => api.delete(`/api/blog/${id}`),
 };
 
+// Wishlist API
+export const wishlistAPI = {
+  getWishlist: () => api.get('/api/wishlist'),
+  addToWishlist: (productId) => {
+    const formData = new FormData();
+    formData.append('product_id', productId);
+    return api.post('/api/wishlist/add', formData);
+  },
+  removeFromWishlist: (productId) => api.delete(`/api/wishlist/remove/${productId}`),
+};
+
 // Orders API
 export const ordersAPI = {
   getOrders: () => api.get('/api/orders'),

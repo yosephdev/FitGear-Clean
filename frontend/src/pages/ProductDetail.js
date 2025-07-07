@@ -61,7 +61,20 @@ const ProductDetail = () => {
     
     await addToCart(product.id, quantity);
     // Navigate to checkout
-    window.location.href = '/cart';
+    window.location.href = '/checkout';
+  };
+
+  const handleWishlistToggle = async () => {
+    if (!isAuthenticated) {
+      toast.error('Please login to use wishlist');
+      return;
+    }
+
+    if (isInWishlist(product.id)) {
+      await removeFromWishlist(product.id);
+    } else {
+      await addToWishlist(product);
+    }
   };
 
   if (isLoading) {

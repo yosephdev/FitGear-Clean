@@ -25,6 +25,7 @@ const ProductDetail = () => {
   const [reviews, setReviews] = useState([]);
 
   const { addToCart, isInCart, getItemQuantity } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {

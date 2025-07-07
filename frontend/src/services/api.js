@@ -99,7 +99,13 @@ export const paymentAPI = {
 // Reviews API
 export const reviewsAPI = {
   getProductReviews: (productId) => api.get(`/api/products/${productId}/reviews`),
-  addReview: (reviewData) => api.post('/api/reviews', reviewData),
+  addReview: (productId, rating, comment) => {
+    const formData = new FormData();
+    formData.append('product_id', productId);
+    formData.append('rating', rating);
+    formData.append('comment', comment);
+    return api.post('/api/reviews', formData);
+  },
   updateReview: (id, reviewData) => api.put(`/api/reviews/${id}`, reviewData),
   deleteReview: (id) => api.delete(`/api/reviews/${id}`),
 };

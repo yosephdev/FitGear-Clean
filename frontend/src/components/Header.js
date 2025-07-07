@@ -17,6 +17,7 @@ const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { user, isAuthenticated, logout } = useAuth();
   const { itemCount } = useCart();
+  const { itemCount: wishlistCount } = useWishlist();
   const navigate = useNavigate();
 
   const handleSearch = (e) => {

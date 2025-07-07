@@ -54,7 +54,7 @@ request_times = defaultdict(lambda: defaultdict(list))
 # Security middleware
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["localhost", "127.0.0.1", "*.fitgear.com"]
+    allowed_hosts=["*"]  # Simplified for now
 )
 
 # CORS middleware

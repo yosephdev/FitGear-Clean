@@ -305,12 +305,12 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
 @app.exception_handler(ValueError)
 async def value_error_handler(request: Request, exc: ValueError):
     logger.error(f"ValueError in {request.url.path}: {str(exc)}")
-    return HTTPException(status_code=400, detail=str(exc))
+    return {"error": str(exc)}, 400
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unexpected error in {request.url.path}: {str(exc)}")
-    return HTTPException(status_code=500, detail="Internal server error")
+    return {"error": "Internal server error"}, 500
 
 # API Routes
 

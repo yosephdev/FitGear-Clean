@@ -415,6 +415,224 @@ async def remove_from_cart(product_id: str, user_id: str = Depends(verify_token)
     )
     return {"message": "Item removed from cart successfully"}
 
+# Payment routes
+@app.post("/api/payment/create-intent")
+async def create_payment_intent(
+    amount: float = Form(...),
+    user_id: str = Depends(verify_token)
+):
+    try:
+        intent = stripe.PaymentIntent.create(
+            amount=int(amount * 100),  # Convert to cents
+            currency='usd',
+            metadata={'user_id': user_id}
+        )
+        
+        return {
+            "client_secret": intent.client_secret,
+            "payment_intent_id": intent.id
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/payment/confirm")
+async def confirm_payment(
+    payment_intent_id: str = Form(...),
+    user_id: str = Depends(verify_token)
+):
+    try:
+        # Get user cart
+        cart = await db.carts.find_one({"user_id": user_id})
+        if not cart or not cart.get("items"):
+            raise HTTPException(status_code=400, detail="Cart is empty")
+        
+        # Create order
+        order_data = {
+            "user_id": user_id,
+            "items": cart["items"],
+            "total": cart.get("total", 0),
+            "status": "completed",
+            "payment_intent_id": payment_intent_id,
+            "shipping_address": {},  # Will be updated with actual address
+            "created_at": datetime.utcnow()
+        }
+        
+        result = await db.orders.insert_one(order_data)
+        
+        # Clear cart
+        await db.carts.delete_one({"user_id": user_id})
+        
+        # Update product inventory
+        for item in cart["items"]:
+            await db.products.update_one(
+                {"_id": ObjectId(item["product_id"])},
+                {"$inc": {"inventory": -item["quantity"]}}
+            )
+        
+        return {
+            "order_id": str(result.inserted_id),
+            "status": "success"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# Reviews routes
+@app.get("/api/products/{product_id}/reviews")
+async def get_product_reviews(product_id: str):
+    try:
+        reviews = await db.reviews.find({"product_id": product_id}).to_list(length=100)
+        
+        # Convert ObjectId to string
+        for review in reviews:
+            review["id"] = str(review["_id"])
+            del review["_id"]
+        
+        return {"reviews": reviews}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/reviews")
+async def add_review(
+    product_id: str = Form(...),
+    rating: int = Form(...),
+    comment: str = Form(...),
+    user_id: str = Depends(verify_token)
+):
+    try:
+        # Get user info
+        user = await db.users.find_one({"_id": ObjectId(user_id)})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Check if user already reviewed this product
+        existing_review = await db.reviews.find_one({
+            "product_id": product_id,
+            "user_id": user_id
+        })
+        
+        if existing_review:
+            raise HTTPException(status_code=400, detail="You have already reviewed this product")
+        
+        # Create review
+        review_data = {
+            "product_id": product_id,
+            "user_id": user_id,
+            "rating": rating,
+            "comment": comment,
+            "user_name": f"{user['first_name']} {user['last_name']}",
+            "created_at": datetime.utcnow()
+        }
+        
+        result = await db.reviews.insert_one(review_data)
+        
+        # Update product rating
+        reviews = await db.reviews.find({"product_id": product_id}).to_list(length=1000)
+        avg_rating = sum(r["rating"] for r in reviews) / len(reviews)
+        
+        await db.products.update_one(
+            {"_id": ObjectId(product_id)},
+            {
+                "$set": {
+                    "rating": round(avg_rating, 1),
+                    "reviews_count": len(reviews)
+                }
+            }
+        )
+        
+        review_data["id"] = str(result.inserted_id)
+        return review_data
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# Wishlist routes
+@app.get("/api/wishlist")
+async def get_wishlist(user_id: str = Depends(verify_token)):
+    try:
+        wishlist = await db.wishlists.find_one({"user_id": user_id})
+        if not wishlist:
+            return {"items": []}
+        
+        # Get product details for each item
+        wishlist_items = []
+        for product_id in wishlist.get("product_ids", []):
+            product = await db.products.find_one({"_id": ObjectId(product_id)})
+            if product:
+                product["id"] = str(product["_id"])
+                del product["_id"]
+                wishlist_items.append(product)
+        
+        return {"items": wishlist_items}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/wishlist/add")
+async def add_to_wishlist(
+    product_id: str = Form(...),
+    user_id: str = Depends(verify_token)
+):
+    try:
+        # Check if product exists
+        product = await db.products.find_one({"_id": ObjectId(product_id)})
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        # Get or create wishlist
+        wishlist = await db.wishlists.find_one({"user_id": user_id})
+        if not wishlist:
+            wishlist = {"user_id": user_id, "product_ids": []}
+        
+        # Add product if not already in wishlist
+        if product_id not in wishlist["product_ids"]:
+            wishlist["product_ids"].append(product_id)
+            wishlist["updated_at"] = datetime.utcnow()
+            
+            await db.wishlists.update_one(
+                {"user_id": user_id},
+                {"$set": wishlist},
+                upsert=True
+            )
+        
+        return {"message": "Item added to wishlist successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.delete("/api/wishlist/remove/{product_id}")
+async def remove_from_wishlist(product_id: str, user_id: str = Depends(verify_token)):
+    try:
+        await db.wishlists.update_one(
+            {"user_id": user_id},
+            {"$pull": {"product_ids": product_id}}
+        )
+        return {"message": "Item removed from wishlist successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# Orders routes
+@app.get("/api/orders")
+async def get_user_orders(user_id: str = Depends(verify_token)):
+    try:
+        orders = await db.orders.find({"user_id": user_id}).sort("created_at", -1).to_list(length=100)
+        
+        # Convert ObjectId to string and get product details
+        for order in orders:
+            order["id"] = str(order["_id"])
+            del order["_id"]
+            
+            # Get product details for each item
+            for item in order["items"]:
+                product = await db.products.find_one({"_id": ObjectId(item["product_id"])})
+                if product:
+                    item["product"] = {
+                        "id": str(product["_id"]),
+                        "name": product["name"],
+                        "images": product.get("images", [])
+                    }
+        
+        return {"orders": orders}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Blog routes
 @app.get("/api/blog")
 async def get_blog_posts(

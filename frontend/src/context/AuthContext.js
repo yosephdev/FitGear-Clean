@@ -5,10 +5,10 @@ import toast from 'react-hot-toast';
 const AuthContext = createContext();
 
 const initialState = {
-  user: null,
+  user: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null,
   token: localStorage.getItem('token'),
-  isLoading: false,
-  isAuthenticated: false,
+  isLoading: !!localStorage.getItem('token'), // Set loading to true if token exists
+  isAuthenticated: false, // This will be updated after token verification
 };
 
 const authReducer = (state, action) => {
@@ -57,9 +57,13 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       const user = localStorage.getItem('user');
       
+      console.log('AuthContext: Checking authentication on startup', { token: !!token, user: !!user });
+      
       if (token && user) {
         try {
+          console.log('AuthContext: Verifying token with backend...');
           const response = await authAPI.getCurrentUser();
+          console.log('AuthContext: Token verified successfully', response.data);
           dispatch({
             type: 'AUTH_SUCCESS',
             payload: {
@@ -68,10 +72,14 @@ export const AuthProvider = ({ children }) => {
             },
           });
         } catch (error) {
+          console.log('AuthContext: Token verification failed', error);
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           dispatch({ type: 'AUTH_FAILURE' });
         }
+      } else {
+        console.log('AuthContext: No token or user found in localStorage');
+        dispatch({ type: 'AUTH_FAILURE' });
       }
     };
 

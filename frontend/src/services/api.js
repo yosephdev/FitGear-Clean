@@ -105,8 +105,16 @@ export const ordersAPI = {
 
 // Payment API
 export const paymentAPI = {
-  createPaymentIntent: (amount) => api.post('/api/payment/create-intent', { amount }),
-  confirmPayment: (paymentIntentId) => api.post('/api/payment/confirm', { payment_intent_id: paymentIntentId }),
+  createPaymentIntent: (amount) => {
+    const formData = new FormData();
+    formData.append('amount', amount);
+    return api.post('/api/payment/create-intent', formData);
+  },
+  confirmPayment: (paymentIntentId) => {
+    const formData = new FormData();
+    formData.append('payment_intent_id', paymentIntentId);
+    return api.post('/api/payment/confirm', formData);
+  },
 };
 
 // Reviews API

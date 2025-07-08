@@ -693,8 +693,18 @@ async def create_payment_intent(
         
         logger.info(f"Payment intent created: {intent.id} for user {user_id}")
         
+        # Access client_secret properly - it might be a property or attribute
+        client_secret = getattr(intent, 'client_secret', None)
+        if not client_secret:
+            # Try alternative access methods
+            client_secret = intent.get('client_secret') if hasattr(intent, 'get') else None
+        
+        if not client_secret:
+            logger.error(f"Failed to get client_secret from payment intent: {intent}")
+            raise HTTPException(status_code=500, detail="Failed to get payment secret")
+        
         return {
-            "client_secret": intent.client_secret,
+            "client_secret": client_secret,
             "payment_intent_id": intent.id
         }
     except stripe.error.StripeError as e:

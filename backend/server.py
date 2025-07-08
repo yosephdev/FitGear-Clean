@@ -11,7 +11,7 @@ import os
 from dotenv import load_dotenv
 import hashlib
 import secrets
-import jwt
+from jose import jwt
 from passlib.context import CryptContext
 import stripe
 from bson import ObjectId
@@ -28,11 +28,14 @@ from collections import defaultdict
 load_dotenv()
 
 # Configure logging
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+LOG_FILE = os.getenv("LOG_FILE", "fitgear_api.log")  # Use relative path by default
+
 logging.basicConfig(
-    level=logging.INFO,
+    level=getattr(logging, LOG_LEVEL),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('/var/log/fitgear_api.log'),
+        logging.FileHandler(LOG_FILE),
         logging.StreamHandler()
     ]
 )
@@ -86,6 +89,19 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 1440  # 24 hours
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
+
+# Additional Configuration from Environment
+PORT = int(os.getenv("PORT", 8001))
+HOST = os.getenv("HOST", "0.0.0.0")
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+LOG_FILE = os.getenv("LOG_FILE", "/var/log/fitgear_api.log")
+MAX_FILE_SIZE = int(os.getenv("MAX_FILE_SIZE", 10485760))  # 10MB
+UPLOAD_DIRECTORY = os.getenv("UPLOAD_DIRECTORY", "uploads/")
+
+# Email Configuration
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+FROM_EMAIL = os.getenv("FROM_EMAIL", "noreply@fitgear.com")
 
 # Stripe configuration
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
@@ -1181,7 +1197,7 @@ async def startup_event():
                 },
                 {
                     "_id": str(uuid.uuid4()),
-                    "title": "Home Gym Setup Guide: Essential Equipment",
+                    "title": "Home Gym Setup: Essential Equipment",
                     "content": "Learn how to set up an effective home gym with the right equipment and limited space...",
                     "author": "FitGear Team",
                     "category": "Home Gym",
@@ -1202,4 +1218,4 @@ async def startup_event():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    uvicorn.run(app, host=HOST, port=PORT)

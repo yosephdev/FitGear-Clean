@@ -192,7 +192,7 @@ FitGear is released under the MIT License. See [LICENSE](LICENSE) for details.
 
 For questions, suggestions, or contributions:
 - **Developer:** [Yoseph Berhane](mailto:contact@yoseph.dev)
-- **GitHub:** [Your GitHub Profile](https://github.com/yourusername)
+- **GitHub:** [GitHub Profile](https://github.com/yosephdev)
 
 ## 🙏 Acknowledgments
 

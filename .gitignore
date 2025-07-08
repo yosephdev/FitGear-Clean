@@ -11,6 +11,8 @@ __pycache__/
 
 # Environment variables
 .env
+.env.example
+venv/
 
 # Django migrations
 **/migrations/
@@ -22,3 +24,5 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+node_modules/

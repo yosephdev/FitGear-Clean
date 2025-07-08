@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8001';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -25,6 +25,15 @@ api.interceptors.request.use(
   }
 );
 
+// Helper to extract error messages consistently
+const extractErrorMessage = (error) => {
+  if (typeof error === 'string') return error;
+  if (error.response?.data?.detail) return error.response.data.detail;
+  if (error.response?.data?.message) return error.response.data.message;
+  if (error.message) return error.message;
+  return 'An unexpected error occurred';
+};
+
 // Response interceptor to handle errors
 api.interceptors.response.use(
   (response) => response,
@@ -34,8 +43,12 @@ api.interceptors.response.use(
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
+      return Promise.reject(new Error('Please log in again.'));
     }
-    return Promise.reject(error);
+    
+    // Convert error to a string message
+    const errorMessage = extractErrorMessage(error);
+    return Promise.reject(new Error(errorMessage));
   }
 );
 
@@ -54,9 +67,7 @@ export const productsAPI = {
   updateProduct: (id, productData) => api.put(`/api/products/${id}`, productData),
   deleteProduct: (id) => api.delete(`/api/products/${id}`),
   getCategories: () => api.get('/api/categories'),
-};
-
-// Cart API
+};  // Cart API
 export const cartAPI = {
   getCart: () => api.get('/api/cart'),
   addToCart: (productId, quantity) => {
@@ -65,7 +76,11 @@ export const cartAPI = {
     formData.append('product_id', productId);
     formData.append('quantity', quantity);
     console.log('FormData created, sending request to /api/cart/add');
-    return api.post('/api/cart/add', formData);
+    return api.post('/api/cart/add', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
   },
   removeFromCart: (productId) => api.delete(`/api/cart/remove/${productId}`),
   updateCartItem: (productId, quantity) => {
@@ -103,17 +118,69 @@ export const ordersAPI = {
   updateOrderStatus: (id, status) => api.put(`/api/orders/${id}/status`, { status }),
 };
 
-// Payment API
+// Payment API with improved error handling
 export const paymentAPI = {
-  createPaymentIntent: (amount) => {
-    const formData = new FormData();
-    formData.append('amount', amount);
-    return api.post('/api/payment/create-intent', formData);
+  createPaymentIntent: async (amount) => {
+    try {
+      console.log('Creating payment intent for amount:', amount);
+      const formData = new FormData();
+      formData.append('amount', amount);
+      
+      const response = await api.post('/api/payment/create-intent', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        }
+      });
+      
+      console.log('Payment intent response:', response);
+      
+      if (!response?.data?.client_secret) {
+        console.error('No client_secret in response:', response);
+        throw new Error('Unable to initialize payment. Please try again.');
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Payment intent creation error:', error);
+      const errorMsg = extractErrorMessage(error);
+      console.error('Extracted error message:', errorMsg);
+      throw new Error(errorMsg);
+    }
   },
-  confirmPayment: (paymentIntentId) => {
-    const formData = new FormData();
-    formData.append('payment_intent_id', paymentIntentId);
-    return api.post('/api/payment/confirm', formData);
+  
+  confirmPayment: async (paymentIntentId, shippingInfo) => {
+    try {
+      console.log('Confirming payment for intent:', paymentIntentId);
+      const formData = new FormData();
+      formData.append('payment_intent_id', paymentIntentId);
+      
+      const shippingAddress = {
+        name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
+        email: shippingInfo.email,
+        address: shippingInfo.address,
+        city: shippingInfo.city,
+        state: shippingInfo.state,
+        postal_code: shippingInfo.zipCode,
+        country: shippingInfo.country,
+      };
+      
+      console.log('Shipping address:', shippingAddress);
+      formData.append('shipping_address', JSON.stringify(shippingAddress));
+      
+      const response = await api.post('/api/payment/confirm', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        }
+      });
+      
+      console.log('Payment confirmation response:', response);
+      return response;
+    } catch (error) {
+      console.error('Payment confirmation error:', error);
+      const errorMsg = extractErrorMessage(error);
+      console.error('Extracted error message:', errorMsg);
+      throw new Error(errorMsg);
+    }
   },
 };
 

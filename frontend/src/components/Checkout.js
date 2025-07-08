@@ -28,6 +28,9 @@ const CheckoutForm = () => {
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [clientSecret, setClientSecret] = useState('');
+  const [paymentError, setPaymentError] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState('');
+  const [orderReference, setOrderReference] = useState('');
   const [shippingInfo, setShippingInfo] = useState({
     firstName: user?.first_name || '',
     lastName: user?.last_name || '',
@@ -44,68 +47,150 @@ const CheckoutForm = () => {
   const finalTotal = total + shippingCost + tax;
 
   useEffect(() => {
-    createPaymentIntent();
-  }, [total]);
+    const createPaymentIntent = async () => {
+      try {
+        setPaymentError('');
+        setPaymentStatus('');
+        setOrderReference('');
+        
+        if (finalTotal <= 0) {
+          setPaymentError('Invalid total amount');
+          return;
+        }
 
-  const createPaymentIntent = async () => {
-    try {
-      const response = await paymentAPI.createPaymentIntent(finalTotal);
-      setClientSecret(response.data.client_secret);
-    } catch (error) {
-      console.error('Error creating payment intent:', error);
-      toast.error('Failed to initialize payment');
+        const response = await paymentAPI.createPaymentIntent(finalTotal);
+        console.log('Payment intent response:', response);
+        
+        if (!response?.data?.client_secret) {
+          throw new Error('Unable to initialize payment. Please try again.');
+        }
+        
+        setClientSecret(response.data.client_secret);
+        setPaymentStatus('ready');
+      } catch (err) {
+        const errorMessage = typeof err === 'string' ? err : (err?.message || 'Failed to initialize payment');
+        console.error('Payment intent creation failed:', err);
+        setPaymentError(errorMessage);
+        setPaymentStatus('failed');
+        toast.error(errorMessage);
+      }
+    };
+
+    if (items.length > 0) {
+      createPaymentIntent();
     }
-  };
+  }, [finalTotal, items]);
 
   const handleShippingChange = (e) => {
-    setShippingInfo({
-      ...shippingInfo,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    setShippingInfo(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    // Clear any existing errors when user makes changes
+    setPaymentError('');
+  };
+
+  const validateShippingInfo = () => {
+    const required = ['firstName', 'lastName', 'email', 'address', 'city', 'state', 'zipCode'];
+    const missing = required.filter(field => !shippingInfo[field]?.trim());
+    
+    if (missing.length > 0) {
+      const errorMessage = `Please fill in all required fields: ${missing.join(', ')}`;
+      setPaymentError(errorMessage);
+      return false;
+    }
+    return true;
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
+    
     if (!stripe || !elements) {
+      setPaymentError('Payment system is not ready. Please try again.');
+      return;
+    }
+
+    if (!validateShippingInfo()) {
       return;
     }
 
     setIsProcessing(true);
+    setPaymentError('');
+    setOrderReference('');
 
-    const cardElement = elements.getElement(CardElement);
+    try {
+      const cardElement = elements.getElement(CardElement);
+      
+      if (!cardElement) {
+        throw new Error('Payment form is not ready');
+      }
 
-    const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-      payment_method: {
-        card: cardElement,
-        billing_details: {
-          name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
-          email: shippingInfo.email,
-          address: {
-            line1: shippingInfo.address,
-            city: shippingInfo.city,
-            state: shippingInfo.state,
-            postal_code: shippingInfo.zipCode,
-            country: shippingInfo.country,
+      // First attempt the Stripe payment
+      const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: cardElement,
+          billing_details: {
+            name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
+            email: shippingInfo.email,
+            address: {
+              line1: shippingInfo.address,
+              city: shippingInfo.city,
+              state: shippingInfo.state,
+              postal_code: shippingInfo.zipCode,
+              country: shippingInfo.country,
+            },
           },
         },
-      },
-    });
+      });
 
-    if (error) {
-      console.error('Payment failed:', error);
-      toast.error(error.message);
-      setIsProcessing(false);
-    } else {
+      if (stripeError) {
+        console.error('Stripe payment error:', stripeError);
+        throw new Error(stripeError.message || 'Payment processing failed');
+      }
+
+      if (!paymentIntent?.id) {
+        throw new Error('Invalid payment response received');
+      }
+
+      // Then confirm the order with our backend
       try {
-        await paymentAPI.confirmPayment(paymentIntent.id);
+        console.log('Confirming order with backend...');
+        const confirmResponse = await paymentAPI.confirmPayment(paymentIntent.id, shippingInfo);
+        console.log('Order confirmation response:', confirmResponse);
+        
+        setPaymentStatus('success');
         toast.success('Order placed successfully!');
         clearCart();
         navigate('/profile?tab=orders');
-      } catch (error) {
-        console.error('Error confirming payment:', error);
-        toast.error('Payment succeeded but order creation failed. Please contact support.');
+      } catch (confirmError) {
+        console.error('Order confirmation failed:', confirmError);
+        
+        // Extract error reference if present
+        const refMatch = confirmError.message?.match(/reference: ([^.]+)/);
+        if (refMatch) {
+          setOrderReference(refMatch[1]);
+        }
+        
+        // Handle specific error cases
+        if (confirmError.message?.includes('out of stock')) {
+          throw new Error('Some items in your cart are out of stock. Please review your cart and try again.');
+        } else if (confirmError.message?.includes('reference:')) {
+          throw new Error(
+            'Your payment was processed but we encountered an issue completing your order. ' +
+            'Please contact support with reference: ' + refMatch?.[1]
+          );
+        } else {
+          throw new Error('Payment succeeded but order creation failed. Please contact support.');
+        }
       }
+    } catch (err) {
+      const errorMessage = typeof err === 'string' ? err : (err?.message || 'Payment failed');
+      console.error('Payment/Order error:', err);
+      setPaymentError(errorMessage);
+      setPaymentStatus('failed');
+      toast.error(errorMessage);
+    } finally {
       setIsProcessing(false);
     }
   };
@@ -236,12 +321,13 @@ const CheckoutForm = () => {
               <CreditCardIcon className="h-6 w-6 mr-2" />
               Payment Information
             </h2>
+            
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Card Details
                 </label>
-                <div className="border border-gray-300 rounded-md p-3">
+                <div className={`border rounded-md p-3 ${paymentError ? 'border-red-300' : 'border-gray-300'}`}>
                   <CardElement
                     options={{
                       style: {
@@ -252,12 +338,39 @@ const CheckoutForm = () => {
                             color: '#aab7c4',
                           },
                         },
+                        invalid: {
+                          color: '#9e2146',
+                        },
                       },
+                    }}
+                    onChange={() => {
+                      if (paymentError) {
+                        setPaymentError('');
+                      }
                     }}
                   />
                 </div>
               </div>
               
+              {paymentError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-red-600 text-sm">{paymentError}</p>
+                  {orderReference && (
+                    <p className="mt-1 text-sm text-gray-600">
+                      Reference: <span className="font-mono">{orderReference}</span>
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {paymentStatus === 'failed' && !paymentError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-red-600 text-sm">
+                    Payment failed. Please check your card details and try again.
+                  </p>
+                </div>
+              )}
+
               <div className="flex items-center text-sm text-gray-500 mb-4">
                 <LockClosedIcon className="h-4 w-4 mr-2" />
                 <span>Your payment information is secure and encrypted</span>
@@ -265,10 +378,20 @@ const CheckoutForm = () => {
 
               <button
                 type="submit"
-                disabled={!stripe || isProcessing}
-                className="w-full bg-primary-600 text-white py-3 px-4 rounded-md hover:bg-primary-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!stripe || isProcessing || !clientSecret || items.length === 0}
+                className={`w-full py-3 px-4 rounded-md font-medium transition-colors duration-200
+                  ${isProcessing || !clientSecret || items.length === 0 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-primary-600 hover:bg-primary-700'}
+                  text-white disabled:opacity-50`}
               >
-                {isProcessing ? 'Processing...' : `Pay ${formatPrice(finalTotal)}`}
+                {isProcessing 
+                  ? 'Processing...' 
+                  : !clientSecret 
+                    ? 'Loading...'
+                    : items.length === 0
+                      ? 'Cart is empty'
+                      : `Pay ${formatPrice(finalTotal)}`}
               </button>
             </form>
           </div>
@@ -349,14 +472,61 @@ const CheckoutForm = () => {
   );
 };
 
+// Error boundary for checkout component
+class CheckoutErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, errorMessage: '' };
+  }
+
+  static getDerivedStateFromError(error) {
+    return {
+      hasError: true,
+      errorMessage: error.message || 'Something went wrong with the checkout process.'
+    };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Checkout error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-gray-50 py-12">
+          <div className="max-w-3xl mx-auto px-4">
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-xl font-semibold text-red-600 mb-4">Error</h2>
+              <p className="text-gray-700 mb-4">{this.state.errorMessage}</p>
+              <button
+                onClick={() => {
+                  this.setState({ hasError: false, errorMessage: '' });
+                  window.location.reload();
+                }}
+                className="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 const Checkout = () => {
   return (
     <Elements stripe={stripePromise}>
-      <div className="min-h-screen bg-gray-50">
-        <div className="container-max px-4 sm:px-6 lg:px-8">
-          <CheckoutForm />
+      <CheckoutErrorBoundary>
+        <div className="min-h-screen bg-gray-50">
+          <div className="container-max px-4 sm:px-6 lg:px-8">
+            <CheckoutForm />
+          </div>
         </div>
-      </div>
+      </CheckoutErrorBoundary>
     </Elements>
   );
 };

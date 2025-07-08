@@ -5,9 +5,10 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import StreamingResponse
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, EmailStr, validator
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Callable
 from datetime import datetime, timedelta
 import os
+import json
 from dotenv import load_dotenv
 import hashlib
 import secrets
@@ -277,13 +278,19 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     try:
         payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("sub")
         if user_id is None:
             raise HTTPException(status_code=401, detail="Invalid token")
-        return user_id
+        
+        # Verify user exists and get proper ID
+        user = await get_user_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+        
+        return str(user["_id"])
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
@@ -324,9 +331,8 @@ async def register(user: UserCreate):
         
         # Create new user
         hashed_password = get_password_hash(user.password)
-        user_id = str(uuid.uuid4())
         user_data = {
-            "_id": user_id,
+            "uuid": str(uuid.uuid4()),  # Store UUID as separate field
             "email": user.email,
             "password": hashed_password,
             "first_name": user.first_name,
@@ -335,6 +341,9 @@ async def register(user: UserCreate):
             "is_admin": False,
             "created_at": datetime.utcnow()
         }
+        
+        result = await db.users.insert_one(user_data)
+        user_id = str(result.inserted_id)  # Use MongoDB's ObjectId
         
         await db.users.insert_one(user_data)
         
@@ -360,11 +369,16 @@ async def register(user: UserCreate):
         raise
     except Exception as e:
         logger.error(f"Registration error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Registration failed")
-
 @app.post("/api/auth/login")
 async def login(user: UserLogin):
     try:
+        # Find user by email
+        db_user = await db.users.find_one({"email": user.email})
+        if not db_user:
+            raise HTTPException(
+                status_code=401,
+                detail="Incorrect email or password"
+            )
         # Find user
         db_user = await db.users.find_one({"email": user.email})
         if not db_user or not verify_password(user.password, db_user["password"]):
@@ -678,90 +692,305 @@ async def create_payment_intent(
     amount: float = Form(...),
     user_id: str = Depends(verify_token)
 ):
+    logger.info(f"Creating payment intent for amount {amount} and user {user_id}")
+    
+    # Validate Stripe configuration
+    stripe_key = os.getenv("STRIPE_SECRET_KEY")
+    if not stripe_key:
+        logger.error("Stripe API key not configured")
+        raise HTTPException(
+            status_code=500,
+            detail="Payment service not configured. Please check server configuration."
+        )
+    
+    # Set the API key explicitly
+    stripe.api_key = stripe_key
+    
     try:
+        # Validate amount
         if amount <= 0:
             raise HTTPException(status_code=400, detail="Amount must be greater than 0")
         
-        if not stripe.api_key:
-            raise HTTPException(status_code=500, detail="Payment service not configured")
-        
-        intent = stripe.PaymentIntent.create(
-            amount=int(amount * 100),  # Convert to cents
-            currency='usd',
-            metadata={'user_id': user_id}
-        )
-        
-        logger.info(f"Payment intent created: {intent.id} for user {user_id}")
-        
-        # Access client_secret properly - it might be a property or attribute
-        client_secret = getattr(intent, 'client_secret', None)
-        if not client_secret:
-            # Try alternative access methods
-            client_secret = intent.get('client_secret') if hasattr(intent, 'get') else None
-        
-        if not client_secret:
-            logger.error(f"Failed to get client_secret from payment intent: {intent}")
-            raise HTTPException(status_code=500, detail="Failed to get payment secret")
-        
-        return {
-            "client_secret": client_secret,
-            "payment_intent_id": intent.id
-        }
+        # Create the payment intent with automatic payment methods
+        try:
+            logger.info("Starting payment intent creation process")
+            
+            # Get or create Stripe customer with enhanced error handling
+            try:
+                customer_id = await get_or_create_stripe_customer(user_id)
+                logger.info(f"Got customer ID: {customer_id}")
+            except stripe.error.StripeError as e:
+                logger.error(f"Failed to get/create customer: {str(e)}")
+                raise HTTPException(status_code=500, detail="Error processing customer information")
+                
+            # Continue with payment intent creation...
+            
+        except stripe.error.StripeError as e:
+            logger.error(f"Payment intent creation failed: {str(e)}")
+            raise HTTPException(status_code=500, detail="Error creating payment intent")
+
     except stripe.error.StripeError as e:
-        logger.error(f"Stripe error: {str(e)}")
-        raise HTTPException(status_code=400, detail="Payment processing error")
-    except HTTPException:
-        raise
+        logger.error(f"Stripe error occurred: {str(e)}")
+        raise HTTPException(status_code=500, detail="Payment processing error")
     except Exception as e:
-        logger.error(f"Create payment intent error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to create payment intent")
+        logger.error(f"Unexpected error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.post("/api/payment/confirm")
 async def confirm_payment(
     payment_intent_id: str = Form(...),
+    shipping_address: str = Form(...),
     user_id: str = Depends(verify_token)
 ):
+    logger.info(f"Confirming payment for intent {payment_intent_id} and user {user_id}")
+    
     try:
-        # Get user cart
-        cart = await db.carts.find_one({"user_id": user_id})
-        if not cart or not cart.get("items"):
-            raise HTTPException(status_code=400, detail="Cart is empty")
+        # Ensure we have a valid Stripe customer
+        customer_id = await get_or_create_stripe_customer(user_id)
+        
+        # Get the payment intent and verify it belongs to our customer
+        try:
+            intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+            if intent.customer != customer_id:
+                logger.error(f"Payment intent {payment_intent_id} does not belong to customer {customer_id}")
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid payment intent"
+                )
+        except stripe.error.InvalidRequestError as e:
+            logger.error(f"Error retrieving payment intent: {str(e)}")
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid payment intent"
+            )
+        
+        # Get user cart and validate inventory in a transaction
+        async with await client.start_session() as session:
+            async with session.start_transaction():
+                # Get cart with items
+                cart = await db.carts.find_one({"user_id": user_id}, session=session)
+                if not cart or not cart.get("items"):
+                    logger.error(f"Empty cart for user {user_id}")
+                    raise HTTPException(status_code=400, detail="Cart is empty")
+                
+                # Validate all items and inventory in transaction
+                for item in cart["items"]:
+                    product = await db.products.find_one(
+                        {"_id": item["product_id"]}, 
+                        session=session
+                    )
+                    if not product:
+                        try:
+                            product = await db.products.find_one(
+                                {"_id": ObjectId(item["product_id"])},
+                                session=session
+                            )
+                        except:
+                            logger.error(f"Invalid product ID format: {item['product_id']}")
+                            raise HTTPException(
+                                status_code=400,
+                                detail=f"Product not found: {item['product_id']}"
+                            )
+                    
+                    if not product:
+                        logger.error(f"Product not found: {item['product_id']}")
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Product not found: {item['product_id']}"
+                        )
+                    
+                    if product["inventory"] < item["quantity"]:
+                        logger.error(f"Insufficient inventory for product {product['name']}")
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Insufficient inventory for {product['name']}"
+                        )
+        
+        # Parse shipping address
+        try:
+            shipping_info = json.loads(shipping_address)
+            logger.info(f"Parsed shipping info: {shipping_info}")
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid shipping address format: {e}")
+            raise HTTPException(status_code=400, detail="Invalid shipping address format")
         
         # Calculate total
         total = sum(item["price"] * item["quantity"] for item in cart["items"])
+        
+        # Verify payment intent
+        try:
+            # Ensure stripe API key is set
+            if not stripe.api_key:
+                stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+            
+            # Get fresh payment intent status
+            intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+            logger.info(f"Retrieved payment intent {payment_intent_id}, initial status: {intent.status}")
+            
+            if intent.status == 'requires_payment_method':
+                logger.error("Payment intent requires payment method")
+                raise HTTPException(
+                    status_code=400,
+                    detail="Payment method not provided or invalid"
+                )
+            
+            # Handle payment intent confirmation with proper state transitions
+            current_status = intent.status
+            logger.info(f"Current payment intent status: {current_status}")
+            
+            if current_status == 'requires_payment_method':
+                raise HTTPException(
+                    status_code=400,
+                    detail="Payment method not provided. Please complete payment details."
+                )
+            
+            if current_status == 'requires_confirmation':
+                try:
+                    logger.info(f"Attempting to confirm payment intent {payment_intent_id}")
+                    
+                    # Confirm with expanded payment method for better error handling
+                    intent = stripe.PaymentIntent.confirm(
+                        payment_intent_id,
+                        payment_method=intent.payment_method,
+                        return_url=os.getenv('FRONTEND_URL', 'http://localhost:3000'),
+                        expand=['payment_method']
+                    )
+                    logger.info(f"Payment intent confirmation result: {intent.status}")
+                    
+                except stripe.error.CardError as e:
+                    error_code = e.error.code
+                    logger.error(f"Card error during confirmation: {error_code} - {str(e)}")
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Payment failed: {e.error.message}"
+                    )
+                except stripe.error.InvalidRequestError as e:
+                    if "unexpected_state" in str(e):
+                        # Handle race condition
+                        logger.warning("Race condition detected, retrieving fresh payment status")
+                        intent = stripe.PaymentIntent.retrieve(
+                            payment_intent_id,
+                            expand=['payment_method']
+                        )
+                        if intent.status in ['succeeded', 'requires_capture']:
+                            logger.info("Payment actually succeeded, proceeding with order")
+                        else:
+                            raise HTTPException(
+                                status_code=400,
+                                detail="Payment is in an invalid state. Please try again."
+                            )
+                    else:
+                        logger.error(f"Invalid request error: {str(e)}")
+                        raise HTTPException(
+                            status_code=400,
+                            detail=str(e)
+                        )
+            
+            # Final status check
+            if intent.status not in ['succeeded', 'requires_capture']:
+                logger.error(f"Payment intent in invalid state: {intent.status}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Payment not successful. Status: {intent.status}"
+                )
+            
+        except stripe.error.StripeError as e:
+            logger.error(f"Stripe error while verifying payment: {str(e)}")
+            if "unexpected_state" in str(e):
+                # Handle race condition by retrieving fresh status
+                try:
+                    intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+                    logger.info(f"Retrieved fresh payment intent status: {intent.status}")
+                    if intent.status in ['succeeded', 'processing', 'requires_capture']:
+                        logger.info("Payment is actually in a valid state, proceeding")
+                    else:
+                        raise HTTPException(
+                            status_code=400, 
+                            detail=f"Payment verification failed. Current status: {intent.status}"
+                        )
+                except stripe.error.StripeError as e2:
+                    logger.error(f"Second Stripe error: {str(e)}")
+                    raise HTTPException(status_code=400, detail=f"Payment verification failed: {str(e)}")
+            else:
+                raise HTTPException(status_code=400, detail=f"Payment verification failed: {str(e)}")
         
         # Create order
         order_id = str(uuid.uuid4())
         order_data = {
             "_id": order_id,
             "user_id": user_id,
+            "payment_intent_id": payment_intent_id,
             "items": cart["items"],
             "total": round(total, 2),
-            "status": "completed",
-            "payment_intent_id": payment_intent_id,
-            "shipping_address": {},  # Will be updated with actual address
+            "shipping_address": shipping_info,
+            "status": "completed",  # Payment is already confirmed at this point
             "created_at": datetime.utcnow()
         }
         
-        await db.orders.insert_one(order_data)
+        logger.info(f"Creating order {order_id} for user {user_id}")
+        try:
+            # Insert the order
+            result = await db.orders.insert_one(order_data)
+            if not result.inserted_id:
+                raise Exception("Failed to create order record")
+            
+            order_id = str(result.inserted_id)
+            logger.info(f"Created order successfully: {order_id}")
+            
+            # Clear the user's cart
+            await db.users.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$set": {"cart": []}}
+            )
+            
+            return {
+                "success": True,
+                "order_id": order_id,
+                "message": "Order created successfully"
+            }
+            
+        except Exception as e:
+            error_ref = f"{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+            logger.error(f"Order creation failed - Reference: {error_ref}", exc_info=True)
+            raise HTTPException(
+                status_code=500,
+                detail="Order creation failed. Please contact support with this reference: " + error_ref
+            )
         
         # Clear cart
-        await db.carts.delete_one({"user_id": user_id})
+        logger.info(f"Clearing cart for user {user_id}")
+        cart_result = await db.carts.delete_one({"user_id": user_id})
+        if not cart_result.deleted_count:
+            logger.warning(f"Cart for user {user_id} was not found during cleanup")
         
         # Update product inventory
+        inventory_updates = []
         for item in cart["items"]:
-            product = await db.products.find_one({"_id": item["product_id"]})
-            if not product:
-                try:
+            try:
+                # Try to find product by ID
+                product = await db.products.find_one({"_id": item["product_id"]})
+                if not product:
                     product = await db.products.find_one({"_id": ObjectId(item["product_id"])})
-                except:
-                    continue
-            
-            if product:
-                await db.products.update_one(
-                    {"_id": product["_id"]},
-                    {"$inc": {"inventory": -item["quantity"]}}
-                )
+                
+                if product:
+                    if product["inventory"] < item["quantity"]:
+                        raise ValueError(f"Insufficient inventory for product {item['product_id']}")
+                        
+                    result = await db.products.update_one(
+                        {"_id": product["_id"]},
+                        {"$inc": {"inventory": -item["quantity"]}}
+                    )
+                    if result.modified_count:
+                        inventory_updates.append(item["product_id"])
+                else:
+                    logger.error(f"Product {item['product_id']} not found during inventory update")
+                    
+            except Exception as e:
+                logger.error(f"Error updating inventory for product {item['product_id']}: {str(e)}")
+                # Continue processing other items even if one fails
+                continue
+        
+        logger.info(f"Updated inventory for {len(inventory_updates)} products")
         
         logger.info(f"Order completed: {order_id} for user {user_id}")
         
@@ -771,9 +1000,36 @@ async def confirm_payment(
         }
     except HTTPException:
         raise
+    except stripe.error.StripeError as e:
+        error_msg = str(e)
+        logger.error(f"Stripe error in payment confirmation: {error_msg}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Payment verification failed: {error_msg}"
+        )
+    except ValueError as e:
+        error_msg = str(e)
+        logger.error(f"Validation error in order creation: {error_msg}")
+        raise HTTPException(
+            status_code=400,
+            detail=error_msg
+        )
     except Exception as e:
-        logger.error(f"Confirm payment error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to confirm payment")
+        error_msg = str(e)
+        error_ref = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+        logger.error(f"Order creation error [{error_ref}]: {error_msg}")
+        logger.error(f"Full error context: payment_intent_id={payment_intent_id}, user_id={user_id}")
+        
+        if "insufficient" in error_msg.lower():
+            raise HTTPException(
+                status_code=400,
+                detail="One or more items in your cart are out of stock. Please review your cart and try again."
+            )
+        
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create order. Please contact support with this reference: {error_ref}"
+        )
 
 # Reviews routes
 @app.get("/api/products/{product_id}/reviews")
@@ -1003,6 +1259,7 @@ async def get_user_orders(user_id: str = Depends(verify_token), page: int = 1, l
                     try:
                         product = await db.products.find_one({"_id": ObjectId(item["product_id"])})
                     except:
+                        logger.warning(f"Could not convert product ID {item['product_id']} to ObjectId")
                         continue
                 
                 if product:
@@ -1225,6 +1482,129 @@ async def startup_event():
         
     except Exception as e:
         logger.error(f"Startup error: {str(e)}")
+
+async def safe_stripe_operation(operation_name: str, operation_func: Callable):
+    """
+    Safely execute a Stripe operation with proper error handling and logging
+    """
+    try:
+        result = await operation_func()
+        logger.info(f"Stripe operation '{operation_name}' completed successfully")
+        return result
+    except stripe.error.CardError as e:
+        # Failed payment
+        logger.error(f"Card error in {operation_name}: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Payment failed: {e.user_message}")
+    except stripe.error.InvalidRequestError as e:
+        if "unexpected_state" in str(e):
+            logger.warning(f"Race condition in {operation_name}, retrieving fresh state")
+            # Handle race condition
+            try:
+                if hasattr(e, 'payment_intent'):
+                    intent = stripe.PaymentIntent.retrieve(e.payment_intent.id)
+                    logger.info(f"Retrieved fresh payment intent status: {intent.status}")
+                    return intent
+            except stripe.error.StripeError as e2:
+                logger.error(f"Failed to recover from race condition: {str(e2)}")
+                raise HTTPException(status_code=400, detail=str(e))
+        logger.error(f"Invalid request in {operation_name}: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except stripe.error.APIConnectionError as e:
+        logger.error(f"Network error in {operation_name}: {str(e)}")
+        raise HTTPException(status_code=503, detail="Unable to connect to payment service")
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe error in {operation_name}: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Unexpected error in {operation_name}: {str(e)}")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred")
+
+async def get_or_create_stripe_customer(user_id: str) -> str:
+    """Get or create a Stripe customer for the given user."""
+    logger.info(f"Getting or creating Stripe customer for user {user_id}")
+    
+    # Try to find user with direct ID first
+    user = await db.users.find_one({"_id": user_id})
+    
+    # If not found, try converting to ObjectId
+    if not user:
+        try:
+            object_id = ObjectId(user_id)
+            user = await db.users.find_one({"_id": object_id})
+        except Exception as e:
+            logger.error(f"Error converting user_id to ObjectId: {str(e)}")
+            user = None
+    
+    if not user:
+        logger.error(f"User not found with ID: {user_id}")
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get user's email
+    user_email = user.get("email")
+    if not user_email:
+        logger.error(f"User {user_id} has no email address")
+        raise HTTPException(status_code=400, detail="User email not found")
+    
+    # Check for existing Stripe customer
+    if user.get("stripe_customer_id"):
+        try:
+            # Verify the customer still exists in Stripe
+            customer = stripe.Customer.retrieve(user["stripe_customer_id"])
+            if customer and not customer.get("deleted", False):
+                logger.info(f"Found existing Stripe customer {customer.id} for user {user_id}")
+                return customer.id
+        except stripe.error.InvalidRequestError as e:
+            logger.warning(f"Invalid Stripe customer, will create new one: {str(e)}")
+    
+    # Create new Stripe customer
+    try:
+        customer = stripe.Customer.create(
+            email=user_email,
+            metadata={
+                "user_id": str(user["_id"]),
+                "created_at": datetime.utcnow().isoformat()
+            },
+            description=f"FitGear customer {user_email}"
+        )
+        
+        # Store Stripe customer ID in our database
+        update_result = await db.users.update_one(
+            {"_id": user["_id"]},  # Use the _id from the found user document
+            {"$set": {"stripe_customer_id": customer.id}}
+        )
+        
+        if update_result.modified_count == 0:
+            logger.error(f"Failed to update user {user_id} with Stripe customer ID {customer.id}")
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to save payment information"
+            )
+        
+        logger.info(f"Created new Stripe customer {customer.id} for user {user_id}")
+        return customer.id
+        
+    except Exception as e:
+        logger.error(f"Error creating Stripe customer: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to create payment profile. Please try again."
+        )
+
+async def get_user_by_id(user_id: str):
+    """Helper function to get user by ID, handling both string and ObjectId formats."""
+    # First try with the ID as is
+    user = await db.users.find_one({"_id": user_id})
+    
+    # If not found, try as ObjectId
+    if not user:
+        try:
+            object_id = ObjectId(user_id)
+            user = await db.users.find_one({"_id": object_id})
+        except:
+            # If conversion fails, try looking up by string ID field
+            user = await db.users.find_one({"id": user_id})
+    
+    return user
 
 if __name__ == "__main__":
     import uvicorn

@@ -96,6 +96,15 @@ export const CartProvider = ({ children }) => {
     }
   }, [isAuthenticated]);
 
+  const extractErrorMessage = (error) => {
+    if (typeof error === 'string') return error;
+    if (error.response?.data?.detail) return error.response.data.detail;
+    if (error.response?.data?.message) return error.response.data.message;
+    if (error.message) return error.message;
+    if (error.toString) return error.toString();
+    return 'An unexpected error occurred';
+  };
+
   const loadCart = async () => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
@@ -104,6 +113,7 @@ export const CartProvider = ({ children }) => {
     } catch (error) {
       console.error('Error loading cart:', error);
       dispatch({ type: 'SET_LOADING', payload: false });
+      toast.error(extractErrorMessage(error));
     }
   };
 
@@ -113,16 +123,25 @@ export const CartProvider = ({ children }) => {
       const response = await cartAPI.addToCart(productId, quantity);
       console.log('Cart add response:', response);
       await loadCart(); // Reload cart to get updated data
-      toast.success('Item added to cart!');
+      toast.success('Item added to cart successfully!');
     } catch (error) {
       console.error('Error adding to cart:', error);
-      console.error('Error details:', {
+      console.error('Detailed error info:', {
         status: error.response?.status,
         statusText: error.response?.statusText,
         data: error.response?.data,
-        message: error.message
+        message: error.message,
+        headers: error.response?.headers,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          headers: error.config?.headers,
+          data: error.config?.data
+        }
       });
-      toast.error('Failed to add item to cart');
+      const errorMessage = extractErrorMessage(error);
+      console.log('Extracted error message:', errorMessage);
+      toast.error(`Failed to add item to cart: ${errorMessage}`);
     }
   };
 
@@ -133,7 +152,7 @@ export const CartProvider = ({ children }) => {
       toast.success('Item removed from cart');
     } catch (error) {
       console.error('Error removing from cart:', error);
-      toast.error('Failed to remove item from cart');
+      toast.error(extractErrorMessage(error));
     }
   };
 
@@ -148,7 +167,7 @@ export const CartProvider = ({ children }) => {
       dispatch({ type: 'UPDATE_QUANTITY', payload: { product_id: productId, quantity } });
     } catch (error) {
       console.error('Error updating quantity:', error);
-      toast.error('Failed to update quantity');
+      toast.error(extractErrorMessage(error));
     }
   };
 

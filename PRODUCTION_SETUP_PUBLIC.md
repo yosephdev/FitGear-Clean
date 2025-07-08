@@ -1,22 +1,28 @@
-# Production Configuration for FitGear Application
+# Production Setup Guide for FitGear Application
+
+## Overview
+
+This guide provides instructions for setting up the FitGear application in a production environment. For security reasons, sensitive configuration values are not included in this public document.
 
 ## Environment Setup
 
 ### Required Environment Variables
+
+Create a `.env` file in the backend directory with the following variables:
 
 ```bash
 # Database Configuration
 MONGO_URL=mongodb://localhost:27017/fitgear_production
 
 # JWT Configuration
-SECRET_KEY=your-super-secure-jwt-secret-key-change-this-in-production-2024
+SECRET_KEY=your-secure-jwt-secret-key-here
 
 # Stripe Configuration (for payment processing)
-STRIPE_SECRET_KEY=sk_live_your_stripe_secret_key_here
-STRIPE_PUBLISHABLE_KEY=pk_live_your_stripe_publishable_key_here
+STRIPE_SECRET_KEY=your-stripe-secret-key-here
+STRIPE_PUBLISHABLE_KEY=your-stripe-publishable-key-here
 
 # SendGrid Configuration (for email notifications)
-SENDGRID_API_KEY=your_sendgrid_api_key_here
+SENDGRID_API_KEY=your-sendgrid-api-key-here
 
 # Application Configuration
 ENVIRONMENT=production
@@ -30,13 +36,15 @@ ALLOWED_ORIGINS=https://your-domain.com,https://www.your-domain.com
 MAX_REQUESTS_PER_MINUTE=60
 
 # Frontend Configuration
-REACT_APP_BACKEND_URL=https://api.your-domain.com
-REACT_APP_STRIPE_PUBLISHABLE_KEY=pk_live_your_stripe_publishable_key_here
+REACT_APP_API_URL=https://api.your-domain.com
+REACT_APP_STRIPE_PUBLISHABLE_KEY=your-stripe-publishable-key-here
 REACT_APP_ENVIRONMENT=production
 REACT_APP_API_TIMEOUT=10000
 REACT_APP_APP_NAME=FitGear
 REACT_APP_APP_VERSION=1.0.0
 ```
+
+⚠️ **Important:** Replace all placeholder values with your actual configuration values.
 
 ## Database Configuration
 
@@ -155,31 +163,6 @@ ufw enable
    )
    ```
 
-### CDN Configuration
-
-1. **Setup CloudFlare or AWS CloudFront**
-   - Cache static assets (images, CSS, JS)
-   - Enable Gzip compression
-   - Configure cache headers
-
-2. **Image Optimization**
-   ```python
-   # Add image optimization middleware
-   from PIL import Image
-   import io
-   
-   def optimize_image(image_data, quality=85, max_width=1200):
-       image = Image.open(io.BytesIO(image_data))
-       if image.width > max_width:
-           ratio = max_width / image.width
-           new_height = int(image.height * ratio)
-           image = image.resize((max_width, new_height), Image.LANCZOS)
-       
-       output = io.BytesIO()
-       image.save(output, format='JPEG', quality=quality, optimize=True)
-       return output.getvalue()
-   ```
-
 ## Monitoring and Logging
 
 ### Production Logging Configuration
@@ -199,20 +182,6 @@ logger = logging.getLogger('fitgear')
 logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 ```
-
-### Health Monitoring Setup
-
-1. **Setup Application Monitoring**
-   - Use tools like New Relic, DataDog, or Prometheus
-   - Monitor API response times, error rates, and resource usage
-
-2. **Database Monitoring**
-   - Monitor MongoDB performance and query times
-   - Setup alerts for high resource usage
-
-3. **Uptime Monitoring**
-   - Use services like UptimeRobot or Pingdom
-   - Monitor critical endpoints every minute
 
 ## Backup and Recovery
 
@@ -242,13 +211,6 @@ rm -rf $BACKUP_DIR/backup_$DATE
 find $BACKUP_DIR -name "backup_*.tar.gz" -mtime +30 -delete
 
 echo "Backup completed: $BACKUP_DIR/backup_$DATE.tar.gz"
-```
-
-### Automated Backup Schedule
-
-```bash
-# Add to crontab (run daily at 2 AM)
-0 2 * * * /path/to/backup-database.sh >> /var/log/backup.log 2>&1
 ```
 
 ## Deployment
@@ -288,59 +250,6 @@ COPY nginx.conf /etc/nginx/nginx.conf
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
-```
-
-### Docker Compose Production
-
-```yaml
-version: '3.8'
-
-services:
-  mongodb:
-    image: mongo:6.0
-    restart: always
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
-    volumes:
-      - mongodb_data:/data/db
-    ports:
-      - "27017:27017"
-
-  redis:
-    image: redis:7-alpine
-    restart: always
-    volumes:
-      - redis_data:/data
-
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.backend
-    restart: always
-    environment:
-      - MONGO_URL=mongodb://root:${MONGO_ROOT_PASSWORD}@mongodb:27017/fitgear_production?authSource=admin
-      - SECRET_KEY=${SECRET_KEY}
-      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
-    depends_on:
-      - mongodb
-      - redis
-    ports:
-      - "8001:8001"
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.frontend
-    restart: always
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend
-
-volumes:
-  mongodb_data:
-  redis_data:
 ```
 
 ## Security Checklist
@@ -396,42 +305,10 @@ volumes:
    mongorestore --drop --db fitgear_test /path/to/backup
    ```
 
-## Maintenance Procedures
+## Notes
 
-### Regular Tasks
-
-1. **Daily**
-   - Check application logs for errors
-   - Verify backup completion
-   - Monitor resource usage
-
-2. **Weekly**
-   - Review performance metrics
-   - Update security patches
-   - Check disk space usage
-
-3. **Monthly**
-   - Review and optimize database queries
-   - Update dependencies
-   - Review security logs
-   - Test backup restoration
-
-### Emergency Procedures
-
-1. **High CPU/Memory Usage**
-   - Check process usage: `top` or `htop`
-   - Restart application if needed
-   - Scale resources if persistent
-
-2. **Database Connection Issues**
-   - Check MongoDB status: `systemctl status mongodb`
-   - Review connection pool settings
-   - Check network connectivity
-
-3. **Application Downtime**
-   - Check service status: `systemctl status supervisor`
-   - Review application logs
-   - Verify database connectivity
-   - Check disk space and memory
+- For detailed configuration values and sensitive information, refer to the private production configuration file
+- Contact the system administrator for access to production secrets
+- All production secrets should be stored securely and never committed to version control
 
 This configuration ensures your FitGear application is production-ready with proper security, performance optimizations, monitoring, and maintenance procedures.

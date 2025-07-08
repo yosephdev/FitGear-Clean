@@ -60,9 +60,11 @@ export const productsAPI = {
 export const cartAPI = {
   getCart: () => api.get('/api/cart'),
   addToCart: (productId, quantity) => {
+    console.log('cartAPI.addToCart called with:', { productId, quantity });
     const formData = new FormData();
     formData.append('product_id', productId);
     formData.append('quantity', quantity);
+    console.log('FormData created, sending request to /api/cart/add');
     return api.post('/api/cart/add', formData);
   },
   removeFromCart: (productId) => api.delete(`/api/cart/remove/${productId}`),

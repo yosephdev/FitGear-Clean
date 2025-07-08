@@ -109,11 +109,19 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = async (productId, quantity = 1) => {
     try {
-      await cartAPI.addToCart(productId, quantity);
+      console.log('Adding to cart:', { productId, quantity });
+      const response = await cartAPI.addToCart(productId, quantity);
+      console.log('Cart add response:', response);
       await loadCart(); // Reload cart to get updated data
       toast.success('Item added to cart!');
     } catch (error) {
       console.error('Error adding to cart:', error);
+      console.error('Error details:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message
+      });
       toast.error('Failed to add item to cart');
     }
   };

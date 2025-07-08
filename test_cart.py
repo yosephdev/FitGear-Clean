@@ -1,8 +1,21 @@
 #!/usr/bin/env python3
 import requests
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Get credentials from environment variables
+login_data = {
+    'email': os.getenv('TEST_ADMIN_EMAIL', 'admin@fitgear.com'),
+    'password': os.getenv('TEST_ADMIN_PASSWORD')
+}
+
+if not login_data['password']:
+    raise EnvironmentError("TEST_ADMIN_PASSWORD environment variable must be set")
 
 # Login first
-login_data = {'email': 'admin@fitgear.com', 'password': 'FitGear2025!Admin'}
 login_response = requests.post('http://localhost:8001/api/auth/login', json=login_data)
 
 if login_response.status_code == 200:

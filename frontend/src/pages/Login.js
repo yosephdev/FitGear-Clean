@@ -201,12 +201,11 @@ const Login = () => {
             </div>
           </div>
 
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-blue-50 rounded-md">
-            <div className="text-sm text-blue-800">
-              <p className="font-semibold mb-2">Demo Credentials:</p>
-              <p><strong>Admin:</strong> admin@fitgear.com / admin123</p>
-              <p><strong>User:</strong> Create a new account or use the admin credentials</p>
+          {/* Registration prompt */}
+          <div className="mt-6 p-4 bg-gray-50 rounded-md">
+            <div className="text-sm text-gray-600">
+              <p className="font-semibold mb-2">New to FitGear?</p>
+              <p>Create a new account to start shopping for fitness equipment and gear.</p>
             </div>
           </div>
         </div>

@@ -702,10 +702,7 @@ Alternative documentation with ReDoc:
 
 To access admin-only endpoints, you need to:
 
-1. Login with admin credentials:
-   - Email: `admin@fitgear.com`
-   - Password: `admin123`
-
+1. Login with admin credentials (contact system administrator for access)
 2. Use the admin token for admin-only endpoints:
    - Creating products
    - Managing orders

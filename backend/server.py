@@ -1101,7 +1101,7 @@ async def startup_event():
             admin_data = {
                 "_id": admin_id,
                 "email": "admin@fitgear.com",
-                "password": get_password_hash("admin123"),
+                "password": get_password_hash("FitGear2025!Admin"),
                 "first_name": "Admin",
                 "last_name": "User",
                 "is_active": True,
@@ -1109,7 +1109,7 @@ async def startup_event():
                 "created_at": datetime.utcnow()
             }
             await db.users.insert_one(admin_data)
-            logger.info("Admin user created: admin@fitgear.com / admin123")
+            logger.info("Admin user created: admin@fitgear.com / [password hidden]")
         
         # Create sample products if collection is empty
         product_count = await db.products.count_documents({})

@@ -63,11 +63,9 @@ Once the server is running, you can access:
 - `HOST`: Server host (default: 0.0.0.0)
 
 ### Default Admin User
-When first starting the server, a default admin user is created:
-- **Email**: admin@fitgear.com
-- **Password**: admin123
+When first starting the server, a default admin user is created with secure credentials.
 
-⚠️ **Important**: Change the admin password in production!
+⚠️ **Important**: Contact the system administrator for admin access credentials.
 
 ## 🧪 Testing
 

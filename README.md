@@ -159,13 +159,11 @@ fit-gear/
 └── README.md            # This file
 ```
 
-## 👨‍💼 Default Admin Account
+## 👨‍💼 Admin Access
 
-A default admin account is created automatically:
-- **Email:** admin@fitgear.com
-- **Password:** admin123
+A default admin account is created automatically during initial setup. For security reasons, the admin credentials are not displayed publicly.
 
-⚠️ **Important:** Change the admin password in production!
+⚠️ **Important:** Contact the system administrator for admin access credentials.
 
 ## 🔐 Security Features
 

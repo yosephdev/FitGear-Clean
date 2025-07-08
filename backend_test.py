@@ -15,7 +15,7 @@ class FitGearAPITest(unittest.TestCase):
         # Get the backend URL from environment variable or use default
         cls.base_url = os.environ.get("REACT_APP_BACKEND_URL", "http://localhost:8001")
         cls.admin_email = "admin@fitgear.com"
-        cls.admin_password = "admin123"
+        cls.admin_password = "FitGear2025!Admin"
         cls.test_user_email = f"test_user_{int(time.time())}@example.com"
         cls.test_user_password = "TestPass123!"
         cls.test_user_first_name = "Test"

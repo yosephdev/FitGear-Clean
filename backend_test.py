@@ -12,12 +12,20 @@ class FitGearAPITest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Set up test environment before running tests"""
-        # Get the backend URL from environment variable or use default
+        # Get configuration from environment variables
         cls.base_url = os.environ.get("REACT_APP_BACKEND_URL", "http://localhost:8001")
-        cls.admin_email = "admin@fitgear.com"
-        cls.admin_password = "FitGear2025!Admin"
+        cls.admin_email = os.environ.get("TEST_ADMIN_EMAIL")
+        cls.admin_password = os.environ.get("TEST_ADMIN_PASSWORD")
+        
+        # Ensure required environment variables are set
+        if not cls.admin_email or not cls.admin_password:
+            raise EnvironmentError(
+                "TEST_ADMIN_EMAIL and TEST_ADMIN_PASSWORD environment variables must be set"
+            )
+            
+        # Generate unique test user credentials
         cls.test_user_email = f"test_user_{int(time.time())}@example.com"
-        cls.test_user_password = "TestPass123!"
+        cls.test_user_password = f"TestPass{uuid.uuid4().hex[:8]}!"
         cls.test_user_first_name = "Test"
         cls.test_user_last_name = "User"
         cls.admin_token = None

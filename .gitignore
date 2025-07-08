@@ -13,6 +13,10 @@ __pycache__/
 .env
 .env.example
 venv/
+.env.test
+.env.test.local
+*.env
+test_credentials.json
 
 # Django migrations
 **/migrations/
@@ -36,6 +40,8 @@ fitgear/logs/
 
 # Admin credentials (sensitive)
 ADMIN_CREDENTIALS.md
+backend_test.py
 
 # Production configuration (contains secrets)
 PRODUCTION_SETUP.md
+

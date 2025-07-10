@@ -44,4 +44,5 @@ backend_test.py
 
 # Production configuration (contains secrets)
 PRODUCTION_SETUP.md
-
+PRODUCTION_SETUP_PUBLIC.md~
+update_admin_password.py~

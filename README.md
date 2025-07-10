@@ -2,9 +2,9 @@
 
 FitGear is a modern e-commerce platform designed for sports equipment enthusiasts. The platform provides a seamless shopping experience for fitness gear, workout equipment, and accessories with a powerful backend API and responsive React frontend.
 
-[Try FitGearLive](https://yosephdev.github.io/fit-gear/) | [View Demo](#features)
+[Try FitGear Live](https://yosephdev.github.io/fit-gear/)
 
-![FitGear App Preview](public/fitgear-preview.png)
+![FitGear App Preview](/fitgear-preview.png)
 
 ## ✨ Features
 

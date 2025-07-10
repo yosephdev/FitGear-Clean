@@ -24,11 +24,104 @@ cp backend/.env.example backend/.env
 - `FROM_EMAIL`: Email sender address
 
 ### 3. Example Configuration:
+
+#### Development (Local):
 ```env
-# Database
+# Database (Local MongoDB)
 MONGO_URL=mongodb://localhost:27017/fitgear
 
 # Security
+SECRET_KEY=your-super-secret-key-here-change-this-in-production
+
+# Payment (Test Keys)
+STRIPE_SECRET_KEY=sk_test_51AbCdEf...
+
+# CORS
+ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+```
+
+#### Production (MongoDB Atlas):
+```env
+# Database (MongoDB Atlas - Cloud)
+MONGO_URL=mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/fitgear?retryWrites=true&w=majority
+
+# Security (Generate a new strong key for production)
+SECRET_KEY=your-production-secret-key-must-be-different-and-secure
+
+# Payment (Live Keys)
+STRIPE_SECRET_KEY=sk_live_51AbCdEf...
+
+# CORS (Your actual domain)
+ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+```
+
+## MongoDB Setup Options
+
+### Option 1: Local Development (Docker)
+MongoDB runs in Docker for better compatibility and easier management:
+
+#### Start MongoDB:
+```bash
+cd backend
+./mongodb.sh start
+```
+
+#### MongoDB Management:
+```bash
+./mongodb.sh start    # Start MongoDB container
+./mongodb.sh stop     # Stop MongoDB container
+./mongodb.sh restart  # Restart MongoDB container
+./mongodb.sh status   # Check container status
+./mongodb.sh logs     # View MongoDB logs
+./mongodb.sh shell    # Open MongoDB shell
+```
+
+The MongoDB data is persisted in a Docker volume, so your data will be preserved across container restarts.
+
+### Option 2: Production (MongoDB Atlas)
+For production deployment, use MongoDB Atlas (free tier available):
+
+1. **Sign up** at [mongodb.com/atlas](https://mongodb.com/atlas)
+2. **Create a free cluster** (512MB storage)
+3. **Set up database user** with read/write permissions
+4. **Configure network access** (allow your application's IP)
+5. **Get connection string** from Atlas dashboard
+6. **Replace the placeholder values:**
+   ```
+   mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>
+   ```
+
+### Option 3: Other Cloud Providers
+- **Railway**: Built-in MongoDB with one-click setup
+- **DigitalOcean**: Managed MongoDB service
+- **AWS DocumentDB**: MongoDB-compatible service
+
+## Database Migration (Local to Production)
+
+### Export local data:
+```bash
+mongodump --db fitgear --out ./backup
+```
+
+### Import to Atlas:
+```bash
+mongorestore --uri "mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/fitgear" ./backup/fitgear
+```
+
+## Environment-Specific Notes:
+
+### Development:
+- Use `localhost` MongoDB URL
+- Use Stripe test keys (start with `sk_test_` and `pk_test_`)
+- Allow localhost CORS origins
+- Use relaxed security settings for easier debugging
+
+### Production:
+- Use cloud-hosted MongoDB (Atlas recommended)
+- Use Stripe live keys (start with `sk_live_` and `pk_live_`)
+- Restrict CORS to your actual domain
+- Use strong, unique SECRET_KEY
+- Enable all security features
 SECRET_KEY=your-super-secret-key-here-change-this-in-production
 
 # Payment

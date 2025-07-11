@@ -10,4 +10,5 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from server import app
 
 # Wrap with Mangum for serverless deployment
+# This is a comment to trigger a change
 handler = Mangum(app)

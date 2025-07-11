@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { productsAPI } from '../services/api';
+import { productsAPI, blogAPI } from '../services/api';
 import { formatPrice } from '../services/api';
 import {
   StarIcon,
@@ -22,8 +22,9 @@ const Home = () => {
       setIsLoading(true);
       const [productsResponse, postsResponse] = await Promise.all([
         productsAPI.getProducts({ limit: 4 }),
-        productsAPI.getPosts({ limit: 3 }),
+        blogAPI.getPosts({ limit: 3 }),
       ]);
+      console.log('API Response:', productsResponse);
       setFeaturedProducts(productsResponse.data.products || []);
       setBlogPosts(postsResponse.data.posts || []);
     } catch (error) {

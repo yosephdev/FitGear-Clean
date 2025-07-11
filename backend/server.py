@@ -1614,6 +1614,14 @@ async def get_user_by_id(user_id: str):
     
     return user
 
+@app.get("/")
+async def root():
+    return {"message": "FitGear API is running!", "status": "healthy", "version": "1.0.0"}
+
+@app.get("/api")
+async def api_root():
+    return {"message": "FitGear API endpoint", "available_endpoints": ["/api/products", "/api/health", "/api/auth"]}
+
 # Vercel handler
 from mangum import Mangum
 handler = Mangum(app)

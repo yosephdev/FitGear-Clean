@@ -18,6 +18,10 @@ import BlogPost from './pages/BlogPost';
 import Profile from './pages/Profile';
 import Admin from './pages/Admin';
 import ProtectedRoute from './components/ProtectedRoute';
+import PrivacyPolicy from './pages/legal/PrivacyPolicy';
+import TermsOfService from './pages/legal/TermsOfService';
+import CookiePolicy from './pages/legal/CookiePolicy';
+import Accessibility from './pages/legal/Accessibility';
 import './App.css';
 
 function App() {
@@ -53,6 +57,10 @@ function App() {
                       <Admin />
                     </ProtectedRoute>
                   } />
+                  <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                  <Route path="/terms-of-service" element={<TermsOfService />} />
+                  <Route path="/cookie-policy" element={<CookiePolicy />} />
+                  <Route path="/accessibility" element={<Accessibility />} />
                 </Routes>
               </main>
               <Footer />

@@ -11,6 +11,8 @@ const images = {
   '/frontend/src/assets/images/peloton-bike.jpeg': pelotonBike,
   '/frontend/src/assets/images/smart.jpg': smartTreadmill,
   '/frontend/src/assets/images/yoga-pant.jpg': yogaPant,
+  '/frontend/src/assets/images/smart-treadmill.jpg': smartTreadmill,
+  '/frontend/src/assets/images/peloton-style-bike.jpeg': pelotonBike,
 };
 
 export const getProductImage = (imagePath) => {

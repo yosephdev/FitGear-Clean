@@ -19,23 +19,16 @@ const Home = () => {
   const fetchHomeData = async () => {
     try {
       setIsLoading(true);
-      console.log('Fetching products...');
-      
-      const productsResponse = await productsAPI.getProducts({ limit: 8 });
-      console.log('Products response:', productsResponse);
-      
-      // Handle different response formats
-      if (productsResponse && productsResponse.data && productsResponse.data.products) {
-        setFeaturedProducts(productsResponse.data.products);
-      } else if (productsResponse && Array.isArray(productsResponse)) {
-        setFeaturedProducts(productsResponse);
-      } else {
-        console.error('Unexpected response format:', productsResponse);
-        setFeaturedProducts([]);
-      }
+      const [productsResponse, postsResponse] = await Promise.all([
+        productsAPI.getProducts({ limit: 4 }),
+        productsAPI.getPosts({ limit: 3 }),
+      ]);
+      setFeaturedProducts(productsResponse.data.products || []);
+      setBlogPosts(postsResponse.data.posts || []);
     } catch (error) {
       console.error('Error fetching home data:', error);
-      setFeaturedProducts([]); // Set empty array on error
+      setFeaturedProducts([]);
+      setBlogPosts([]);
     } finally {
       setIsLoading(false);
     }

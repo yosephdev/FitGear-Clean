@@ -30,15 +30,20 @@ load_dotenv()
 
 # Configure logging
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
-LOG_FILE = os.getenv("LOG_FILE", "fitgear_api.log")  # Use relative path by default
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+
+# Basic logging configuration
+log_handlers = [logging.StreamHandler()]
+
+# In development, also log to a file
+if ENVIRONMENT == 'development':
+    LOG_FILE = os.getenv("LOG_FILE", "fitgear_api.log")
+    log_handlers.append(logging.FileHandler(LOG_FILE))
 
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(LOG_FILE),
-        logging.StreamHandler()
-    ]
+    handlers=log_handlers
 )
 logger = logging.getLogger(__name__)
 

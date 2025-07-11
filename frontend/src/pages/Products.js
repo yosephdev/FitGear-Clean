@@ -12,6 +12,7 @@ import {
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import ProductSkeleton from '../components/ProductSkeleton';
+import ProductCard from '../components/ProductCard';
 
 const Products = () => {
   const [products, setProducts] = useState([]);
@@ -308,108 +309,7 @@ const Products = () => {
                 : 'space-y-4'
               }>
                 {products.map((product) => (
-                  <div
-                    key={product.id}
-                    className={viewMode === 'grid' 
-                      ? 'card-elevated product-card'
-                      : 'bg-white rounded-lg shadow-md p-4 flex space-x-4'
-                    }
-                  >
-                    {viewMode === 'grid' ? (
-                      <>
-                        <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden bg-gray-200">
-                          <img
-                            src={product.images[0] || 'https://via.placeholder.com/300x300?text=No+Image'}
-                            alt={product.name}
-                            className="w-full h-64 object-cover object-center product-image"
-                          />
-                        </div>
-                        <div className="p-4">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">{product.name}</h3>
-                          <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
-                          <div className="flex items-center mb-3">
-                            <div className="flex items-center">
-                              {[...Array(5)].map((_, i) => (
-                                <StarIcon
-                                  key={i}
-                                  className={`h-4 w-4 ${i < Math.floor(product.rating) ? 'text-yellow-400' : 'text-gray-300'}`}
-                                />
-                              ))}
-                            </div>
-                            <span className="ml-2 text-sm text-gray-600">({product.reviews_count})</span>
-                          </div>
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-2xl font-bold text-primary-600">
-                              {formatPrice(product.price)}
-                            </span>
-                            <span className="text-sm text-gray-500">{product.brand}</span>
-                          </div>
-                          <div className="flex space-x-2">
-                            <Link
-                              to={`/products/${product.id}`}
-                              className="flex-1 bg-gray-100 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-200 transition-colors duration-200 text-center"
-                            >
-                              View Details
-                            </Link>
-                            <button
-                              onClick={() => handleAddToCart(product.id)}
-                              className="flex-1 bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 transition-colors duration-200"
-                            >
-                              Add to Cart
-                            </button>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="w-24 h-24 flex-shrink-0">
-                          <img
-                            src={product.images[0] || 'https://via.placeholder.com/150x150?text=No+Image'}
-                            alt={product.name}
-                            className="w-full h-full object-cover rounded-md"
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h3 className="text-lg font-semibold text-gray-900">{product.name}</h3>
-                              <p className="text-gray-600 text-sm mb-2">{product.description}</p>
-                              <div className="flex items-center mb-2">
-                                <div className="flex items-center">
-                                  {[...Array(5)].map((_, i) => (
-                                    <StarIcon
-                                      key={i}
-                                      className={`h-4 w-4 ${i < Math.floor(product.rating) ? 'text-yellow-400' : 'text-gray-300'}`}
-                                    />
-                                  ))}
-                                </div>
-                                <span className="ml-2 text-sm text-gray-600">({product.reviews_count})</span>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <div className="text-2xl font-bold text-primary-600 mb-2">
-                                {formatPrice(product.price)}
-                              </div>
-                              <div className="flex space-x-2">
-                                <Link
-                                  to={`/products/${product.id}`}
-                                  className="bg-gray-100 text-gray-800 px-3 py-1 rounded text-sm hover:bg-gray-200 transition-colors duration-200"
-                                >
-                                  View
-                                </Link>
-                                <button
-                                  onClick={() => handleAddToCart(product.id)}
-                                  className="bg-primary-600 text-white px-3 py-1 rounded text-sm hover:bg-primary-700 transition-colors duration-200"
-                                >
-                                  Add to Cart
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
+                  <ProductCard key={product.id} product={product} viewMode={viewMode} />
                 ))}
               </div>
             )}

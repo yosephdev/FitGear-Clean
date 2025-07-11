@@ -106,7 +106,7 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
   }
 
   return (
-    <div className="card-elevated product-card relative group">
+    <div className="card-elevated product-card relative group transform hover:-translate-y-1 transition-all duration-300 hover:shadow-xl">
       {/* Wishlist Button */}
       <button
         onClick={handleWishlistToggle}
@@ -123,47 +123,47 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
         <img
           src={product.images[0] || 'https://via.placeholder.com/300x300?text=No+Image'}
           alt={product.name}
-          className="w-full h-64 object-cover object-center product-image"
+          className="w-full h-64 object-cover object-center product-image group-hover:scale-105 transition-transform duration-300"
         />
       </div>
       
       <div className="p-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2 hover:text-primary-600">
+        <h3 className="text-lg font-semibold text-gray-800 mb-2 hover:text-primary-600">
           <Link to={`/products/${product.id}`}>{product.name}</Link>
         </h3>
-        <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
+        <p className="text-gray-600 text-sm mb-3 line-clamp-2 h-10">{product.description}</p>
         
         <div className="flex items-center mb-3">
           <div className="flex items-center">
             {[...Array(5)].map((_, i) => (
               <StarIcon
                 key={i}
-                className={`h-4 w-4 ${i < Math.floor(product.rating) ? 'text-yellow-400' : 'text-gray-300'}`}
+                className={`h-5 w-5 ${i < Math.floor(product.rating) ? 'text-yellow-400' : 'text-gray-300'}`}
               />
             ))}
           </div>
-          <span className="ml-2 text-sm text-gray-600">({product.reviews_count})</span>
+          <span className="ml-2 text-sm text-gray-600">({product.reviews_count} reviews)</span>
         </div>
         
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-2xl font-bold text-primary-600">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-3xl font-bold text-gray-900">
             {formatPrice(product.price)}
           </span>
-          <span className="text-sm text-gray-500">{product.brand}</span>
+          <span className="text-sm font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">{product.brand}</span>
         </div>
         
         <div className="flex space-x-2">
           <Link
             to={`/products/${product.id}`}
-            className="flex-1 bg-gray-100 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-200 transition-colors duration-200 text-center"
+            className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors duration-300 text-center font-semibold"
           >
             View Details
           </Link>
           <button
             onClick={handleAddToCart}
-            className="flex-1 bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 transition-colors duration-200 flex items-center justify-center"
+            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors duration-300 flex items-center justify-center font-semibold"
           >
-            <ShoppingCartIcon className="h-4 w-4 mr-1" />
+            <ShoppingCartIcon className="h-5 w-5 mr-2" />
             Add to Cart
           </button>
         </div>

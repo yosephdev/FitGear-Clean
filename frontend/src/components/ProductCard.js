@@ -11,6 +11,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
+import { getProductImage } from '../services/imageService';
 
 const ProductCard = ({ product, viewMode = 'grid' }) => {
   const { addToCart } = useCart();
@@ -40,13 +41,15 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
   };
 
   const isWishlisted = isInWishlist(product.id);
+  
+  const imageSrc = getProductImage(product.images[0]) || product.images[0] || 'https://via.placeholder.com/300x300?text=No+Image';
 
   if (viewMode === 'list') {
     return (
       <div className="bg-white rounded-lg shadow-md p-4 flex space-x-4 hover:shadow-lg transition-shadow duration-200">
         <div className="w-24 h-24 flex-shrink-0">
           <img
-            src={product.images[0] || 'https://via.placeholder.com/150x150?text=No+Image'}
+            src={imageSrc}
             alt={product.name}
             className="w-full h-full object-cover rounded-md"
           />
@@ -121,7 +124,7 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
 
       <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden bg-gray-200">
         <img
-          src={product.images[0] || 'https://via.placeholder.com/300x300?text=No+Image'}
+          src={imageSrc}
           alt={product.name}
           className="w-full h-64 object-cover object-center product-image group-hover:scale-105 transition-transform duration-300"
         />

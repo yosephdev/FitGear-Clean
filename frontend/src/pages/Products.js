@@ -67,7 +67,7 @@ const Products = () => {
       });
       
       const response = await productsAPI.getProducts(params);
-      let productsData = response.data.products;
+      let productsData = response.data.products || [];
       
       // Sort products
       if (filters.sortBy === 'price_low') {

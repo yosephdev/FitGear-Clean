@@ -92,9 +92,10 @@ const Products = () => {
   const fetchCategories = async () => {
     try {
       const response = await productsAPI.getCategories();
-      setCategories(response.data.categories);
+      setCategories(response.data.categories || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
+      setCategories([]); // Ensure categories is an empty array on error
     }
   };
 

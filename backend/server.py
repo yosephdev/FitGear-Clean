@@ -341,7 +341,6 @@ async def register(user: UserCreate):
         # Create new user
         hashed_password = get_password_hash(user.password)
         user_data = {
-            "uuid": str(uuid.uuid4()),  # Store UUID as separate field
             "email": user.email,
             "password": hashed_password,
             "first_name": user.first_name,
@@ -352,9 +351,7 @@ async def register(user: UserCreate):
         }
         
         result = await db.users.insert_one(user_data)
-        user_id = str(result.inserted_id)  # Use MongoDB's ObjectId
-        
-        await db.users.insert_one(user_data)
+        user_id = str(result.inserted_id)
         
         # Create access token
         access_token = create_access_token(
@@ -378,24 +375,19 @@ async def register(user: UserCreate):
         raise
     except Exception as e:
         logger.error(f"Registration error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Registration failed")
+
 @app.post("/api/auth/login")
 async def login(user: UserLogin):
     try:
         # Find user by email
-        db_user = await db.users.find_one({"email": user.email})
-        if not db_user:
-            raise HTTPException(
-                status_code=401,
-                detail="Incorrect email or password"
-            )
-        # Find user
         db_user = await db.users.find_one({"email": user.email})
         if not db_user or not verify_password(user.password, db_user["password"]):
             raise HTTPException(status_code=401, detail="Incorrect email or password")
         
         # Create access token
         access_token = create_access_token(
-            data={"sub": db_user["_id"]},
+            data={"sub": str(db_user["_id"])},  # Convert to string!
             expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         )
         
@@ -405,7 +397,7 @@ async def login(user: UserLogin):
             "access_token": access_token,
             "token_type": "bearer",
             "user": {
-                "id": db_user["_id"],
+                "id": str(db_user["_id"]),  # Convert to string!
                 "email": db_user["email"],
                 "first_name": db_user["first_name"],
                 "last_name": db_user["last_name"],
@@ -1427,6 +1419,13 @@ async def startup_event():
                     "description": "Non-slip yoga mat with excellent cushioning and grip. Perfect for yoga, pilates, and stretching.",
                     "price": 49.99,
                     "category": "Fitness Accessories",
+                },
+                {
+                    "_id": str(uuid.uuid4()),
+                    "name": "Premium Yoga Mat",
+                    "description": "Non-slip yoga mat with excellent cushioning and grip. Perfect for yoga, pilates, and stretching.",
+                    "price": 49.99,
+                    "category": "Fitness Accessories",
                     "brand": "ZenFit",
                     "images": ["https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500"],
                     "inventory": 25,
@@ -1615,12 +1614,11 @@ async def get_user_by_id(user_id: str):
     
     return user
 
+# Vercel handler
 from mangum import Mangum
-
-app = FastAPI()
-
 handler = Mangum(app)
 
+# Local development
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host=HOST, port=PORT)

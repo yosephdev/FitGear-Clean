@@ -9,6 +9,7 @@ import {
   CreditCardIcon,
   ChatBubbleBottomCenterTextIcon,
 } from '@heroicons/react/24/solid';
+import ProductCard from '../components/ProductCard';
 
 const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -168,54 +169,9 @@ const Home = () => {
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {featuredProducts && featuredProducts.length > 0 ? (
-              featuredProducts.map((product) => (
-                <div key={product.id} className="card-elevated product-card">
-                  <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden bg-gray-200">
-                    <img
-                      src={product.images?.[0] || 'https://via.placeholder.com/300x300?text=No+Image'}
-                      alt={product.name}
-                      className="w-full h-64 object-cover object-center product-image"
-                    />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{product.name}</h3>
-                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold text-primary-600">
-                        {formatPrice(product.price)}
-                      </span>
-                      <div className="flex items-center">
-                        <StarIcon className="w-4 h-4 text-yellow-400" />
-                        <span className="ml-1 text-sm text-gray-600">{product.rating || '5.0'}</span>
-                      </div>
-                    </div>
-                    <Link
-                      to={`/products/${product.id}`}
-                      className="mt-4 w-full bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 transition-colors duration-200 text-center block"
-                    >
-                      View Details
-                    </Link>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="col-span-full text-center py-12">
-                {isLoading ? (
-                  <div className="flex flex-col items-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mb-4"></div>
-                    <p className="text-gray-600">Loading featured products...</p>
-                  </div>
-                ) : (
-                  <div className="text-gray-600">
-                    <p className="text-lg mb-2">No featured products available at the moment.</p>
-                    <Link to="/products" className="text-primary-600 hover:text-primary-700">
-                      Browse all products →
-                    </Link>
-                  </div>
-                )}
-              </div>
-            )}
+            {featuredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
           </div>
           <div className="text-center mt-12">
             <Link
@@ -224,6 +180,38 @@ const Home = () => {
             >
               View All Products
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Blog Section */}
+      <section className="section-padding bg-white">
+        <div className="container-max">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4 font-heading">
+              Latest From Our Blog
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Get inspired and stay informed with our latest articles on fitness, nutrition, and wellness.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {blogPosts.map((post) => (
+              <div key={post.id} className="blog-card">
+                <img
+                  src={post.featured_image || 'https://via.placeholder.com/400x250?text=Blog+Post'}
+                  alt={post.title}
+                  className="w-full h-48 object-cover rounded-lg mb-4"
+                />
+                <div className="p-2">
+                  <p className="text-sm text-gray-500 mb-2">{post.category}</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2 hover:text-primary-600">
+                    <Link to={`/blog/${post.id}`}>{post.title}</Link>
+                  </h3>
+                  <p className="text-gray-600 text-sm line-clamp-3">{post.content}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>

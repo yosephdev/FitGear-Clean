@@ -102,24 +102,27 @@ try:
             logger.info("Database indexes created successfully")
             
             # Create admin user if not exists
-            admin_email = os.getenv("ADMIN_EMAIL", "admin@fitgear.com")
-            admin_password = os.getenv("ADMIN_PASSWORD", "FitGear2025!Admin")
+            admin_email = os.getenv("ADMIN_EMAIL")
+            admin_password = os.getenv("ADMIN_PASSWORD")
 
-            admin_user = await db.users.find_one({"email": admin_email})
-            if not admin_user:
-                admin_id = str(uuid.uuid4())
-                admin_data = {
-                    "_id": admin_id,
-                    "email": admin_email,
-                    "password": get_password_hash(admin_password),
-                    "first_name": "Admin",
-                    "last_name": "User",
-                    "is_active": True,
-                    "is_admin": True,
-                    "created_at": datetime.utcnow()
-                }
-                await db.users.insert_one(admin_data)
-                logger.info(f"Admin user created: {admin_email}")
+            if not admin_email or not admin_password:
+                logger.warning("ADMIN_EMAIL and ADMIN_PASSWORD environment variables are not set. Skipping admin user creation.")
+            else:
+                admin_user = await db.users.find_one({"email": admin_email})
+                if not admin_user:
+                    admin_id = str(uuid.uuid4())
+                    admin_data = {
+                        "_id": admin_id,
+                        "email": admin_email,
+                        "password": get_password_hash(admin_password),
+                        "first_name": "Admin",
+                        "last_name": "User",
+                        "is_active": True,
+                        "is_admin": True,
+                        "created_at": datetime.utcnow()
+                    }
+                    await db.users.insert_one(admin_data)
+                    logger.info(f"Admin user created: {admin_email}")
 
             # Create sample products if collection is empty
             product_count = await db.products.count_documents({})

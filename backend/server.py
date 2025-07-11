@@ -71,17 +71,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# MongoDB connection with connection pooling
-MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017/fitgear")
-client = AsyncIOMotorClient(
-    MONGO_URL,
-    maxPoolSize=50,
-    minPoolSize=5,
-    maxIdleTimeMS=30000,
-    waitQueueTimeoutMS=5000,
-    serverSelectionTimeoutMS=5000
-)
-db = client.fitgear
+# MongoDB connection with error handling
+try:
+    MONGO_URL = os.getenv("MONGO_URL")
+    if not MONGO_URL:
+        raise ValueError("MONGO_URL environment variable not set")
+    
+    client = AsyncIOMotorClient(MONGO_URL)
+    db = client.fitgear
+    
+    # Test connection on startup
+    @app.on_event("startup")
+    async def startup_event():
+        try:
+            await client.admin.command('ping')
+            print("✅ Connected to MongoDB")
+        except Exception as e:
+            print(f"❌ MongoDB connection failed: {e}")
+            
+except Exception as e:
+    print(f"❌ MongoDB setup failed: {e}")
 
 # Security
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")
@@ -1609,3 +1618,5 @@ async def get_user_by_id(user_id: str):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host=HOST, port=PORT)
+
+app = FastAPI()

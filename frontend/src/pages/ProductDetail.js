@@ -15,6 +15,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid, HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
+import { getProductImage } from '../services/imageService';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -104,7 +105,7 @@ const ProductDetail = () => {
   }
 
   const images = product.images && product.images.length > 0 
-    ? product.images 
+    ? product.images.map(getProductImage) 
     : ['https://via.placeholder.com/600x600?text=No+Image'];
 
   const inStock = product.inventory > 0;

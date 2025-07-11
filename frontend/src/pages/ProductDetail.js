@@ -309,13 +309,16 @@ const ProductDetail = () => {
           </div>
         </div>
 
+        {/* Reviews Section */}
+        <ReviewSection productId={id} />
+
         {/* Related Products Section */}
         <div className="mt-16">
           <h2 className="text-2xl font-bold text-gray-900 mb-8 font-heading">
-            You might also like
+            Related Products
           </h2>
-          <div className="text-center text-gray-500">
-            <p>Related products coming soon...</p>
+          <div className="text-center text-gray-500 py-12">
+            <p className="text-lg">Related products coming soon...</p>
           </div>
         </div>
       </div>

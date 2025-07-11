@@ -83,12 +83,150 @@ try:
     
     # Test connection on startup
     @app.on_event("startup")
-    async def startup_event():
+    async def startup_db_client():
         try:
             await client.admin.command('ping')
             print("✅ Connected to MongoDB")
+
+            # Create indexes
+            await db.products.create_index([("category", 1), ("is_active", 1)])
+            await db.products.create_index([("name", "text"), ("description", "text"), ("brand", "text")])
+            await db.products.create_index([("price", 1)])
+            await db.users.create_index([("email", 1)], unique=True)
+            await db.reviews.create_index([("product_id", 1), ("user_id", 1)])
+            await db.orders.create_index([("user_id", 1), ("created_at", -1)])
+            await db.carts.create_index([("user_id", 1)])
+            await db.wishlists.create_index([("user_id", 1)])
+            await db.blog_posts.create_index([("category", 1), ("is_published", 1)])
+            
+            logger.info("Database indexes created successfully")
+            
+            # Create admin user if not exists
+            admin_email = os.getenv("ADMIN_EMAIL", "admin@fitgear.com")
+            admin_password = os.getenv("ADMIN_PASSWORD", "FitGear2025!Admin")
+
+            admin_user = await db.users.find_one({"email": admin_email})
+            if not admin_user:
+                admin_id = str(uuid.uuid4())
+                admin_data = {
+                    "_id": admin_id,
+                    "email": admin_email,
+                    "password": get_password_hash(admin_password),
+                    "first_name": "Admin",
+                    "last_name": "User",
+                    "is_active": True,
+                    "is_admin": True,
+                    "created_at": datetime.utcnow()
+                }
+                await db.users.insert_one(admin_data)
+                logger.info(f"Admin user created: {admin_email}")
+
+            # Create sample products if collection is empty
+            product_count = await db.products.count_documents({})
+            if product_count == 0:
+                # ... (sample product creation code remains the same)
+                sample_products = [
+                {
+                    "_id": str(uuid.uuid4()),
+                    "name": "Professional Olympic Barbell",
+                    "description": "High-quality Olympic barbell perfect for deadlifts, squats, and bench press. Made from premium steel with excellent grip.",
+                    "price": 299.99,
+                    "category": "Strength Training",
+                    "brand": "FitGear Pro",
+                    "images": ["https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500"],
+                    "inventory": 15,
+                    "rating": 4.8,
+                    "reviews_count": 24,
+                    "specifications": {"weight": "20kg", "length": "220cm", "material": "Steel"},
+                    "is_active": True,
+                    "created_at": datetime.utcnow()
+                },
+                {
+                    "_id": str(uuid.uuid4()),
+                    "name": "Adjustable Dumbbells Set",
+                    "description": "Complete adjustable dumbbell set with multiple weight plates. Perfect for home gym setups.",
+                    "price": 199.99,
+                    "category": "Strength Training",
+                    "brand": "FitGear Home",
+                    "images": ["https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500"],
+                    "inventory": 8,
+                    "rating": 4.6,
+                    "reviews_count": 18,
+                    "specifications": {"weight_range": "5-50lbs", "material": "Cast Iron"},
+                    "is_active": True,
+                    "created_at": datetime.utcnow()
+                },
+                {
+                    "_id": str(uuid.uuid4()),
+                    "name": "Premium Yoga Mat",
+                    "description": "Non-slip yoga mat with excellent cushioning and grip. Perfect for yoga, pilates, and stretching.",
+                    "price": 49.99,
+                    "category": "Fitness Accessories",
+                    "brand": "ZenFit",
+                    "images": ["https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500"],
+                    "inventory": 25,
+                    "rating": 4.7,
+                    "reviews_count": 32,
+                    "specifications": {"thickness": "6mm", "material": "Natural Rubber"},
+                    "is_active": True,
+                    "created_at": datetime.utcnow()
+                },
+                {
+                    "_id": str(uuid.uuid4()),
+                    "name": "Resistance Bands Set",
+                    "description": "Complete set of resistance bands with different resistance levels. Great for strength training and rehabilitation.",
+                    "price": 29.99,
+                    "category": "Fitness Accessories",
+                    "brand": "FlexFit",
+                    "images": ["https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500"],
+                    "inventory": 30,
+                    "rating": 4.5,
+                    "reviews_count": 15,
+                    "specifications": {"resistance_levels": "Light, Medium, Heavy", "material": "Latex"},
+                    "is_active": True,
+                    "created_at": datetime.utcnow()
+                }
+            ]
+            
+                await db.products.insert_many(sample_products)
+                logger.info("Sample products created")
+            
+            # Create sample blog posts
+            blog_count = await db.blog_posts.count_documents({})
+            if blog_count == 0:
+                sample_posts = [
+                {
+                    "_id": str(uuid.uuid4()),
+                    "title": "10 Essential Exercises for Building Strength",
+                    "content": "Discover the fundamental exercises that form the foundation of any strength training program...",
+                    "author": "FitGear Team",
+                    "category": "Strength Training",
+                    "tags": ["strength", "exercises", "beginner"],
+                    "featured_image": "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500",
+                    "is_published": True,
+                    "created_at": datetime.utcnow()
+                },
+                {
+                    "_id": str(uuid.uuid4()),
+                    "title": "Home Gym Setup: Essential Equipment",
+                    "content": "Learn how to set up an effective home gym with the right equipment and limited space...",
+                    "author": "FitGear Team",
+                    "category": "Home Gym",
+                    "tags": ["home gym", "equipment", "setup"],
+                    "featured_image": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500",
+                    "is_published": True,
+                    "created_at": datetime.utcnow()
+                }
+            ]
+            
+                await db.blog_posts.insert_many(sample_posts)
+                logger.info("Sample blog posts created")
+
+            logger.info("Application startup completed successfully")
+
         except Exception as e:
             print(f"❌ MongoDB connection failed: {e}")
+            logger.error(f"Startup error: {str(e)}")
             
 except Exception as e:
     print(f"❌ MongoDB setup failed: {e}")
@@ -725,7 +863,13 @@ async def create_payment_intent(
                 logger.error(f"Failed to get/create customer: {str(e)}")
                 raise HTTPException(status_code=500, detail="Error processing customer information")
                 
-            # Continue with payment intent creation...
+            intent = stripe.PaymentIntent.create(
+                amount=int(amount * 100),  # Stripe expects the amount in cents
+                currency="usd",
+                customer=customer_id,
+                automatic_payment_methods={"enabled": True},
+            )
+            return {"client_secret": intent.client_secret}
             
         except stripe.error.StripeError as e:
             logger.error(f"Payment intent creation failed: {str(e)}")

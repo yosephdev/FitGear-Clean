@@ -1564,13 +1564,6 @@ async def startup_event():
                     "description": "Non-slip yoga mat with excellent cushioning and grip. Perfect for yoga, pilates, and stretching.",
                     "price": 49.99,
                     "category": "Fitness Accessories",
-                },
-                {
-                    "_id": str(uuid.uuid4()),
-                    "name": "Premium Yoga Mat",
-                    "description": "Non-slip yoga mat with excellent cushioning and grip. Perfect for yoga, pilates, and stretching.",
-                    "price": 49.99,
-                    "category": "Fitness Accessories",
                     "brand": "ZenFit",
                     "images": ["https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500"],
                     "inventory": 25,

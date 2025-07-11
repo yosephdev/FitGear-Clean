@@ -16,22 +16,33 @@ const Home = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchHomeData = async () => {
-      try {
-        const [productsResponse] = await Promise.all([
-          productsAPI.getProducts({ limit: 8 }),
-        ]);
-        
+  const fetchHomeData = async () => {
+    try {
+      setIsLoading(true);
+      console.log('Fetching products...');
+      
+      const productsResponse = await productsAPI.getProducts({ limit: 8 });
+      console.log('Products response:', productsResponse);
+      
+      // Handle different response formats
+      if (productsResponse && productsResponse.data && productsResponse.data.products) {
         setFeaturedProducts(productsResponse.data.products);
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error fetching home data:', error);
-        setIsLoading(false);
+      } else if (productsResponse && Array.isArray(productsResponse)) {
+        setFeaturedProducts(productsResponse);
+      } else {
+        console.error('Unexpected response format:', productsResponse);
+        setFeaturedProducts([]);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching home data:', error);
+      setFeaturedProducts([]); // Set empty array on error
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchHomeData();
-  }, []);
+  fetchHomeData();
+}, []);
 
   const features = [
     {
@@ -164,36 +175,54 @@ const Home = () => {
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {featuredProducts.map((product) => (
-              <div key={product.id} className="card-elevated product-card">
-                <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden bg-gray-200">
-                  <img
-                    src={product.images[0] || 'https://via.placeholder.com/300x300?text=No+Image'}
-                    alt={product.name}
-                    className="w-full h-64 object-cover object-center product-image"
-                  />
-                </div>
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{product.name}</h3>
-                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold text-primary-600">
-                      {formatPrice(product.price)}
-                    </span>
-                    <div className="flex items-center">
-                      <StarIcon className="w-4 h-4 text-yellow-400" />
-                      <span className="ml-1 text-sm text-gray-600">{product.rating}</span>
-                    </div>
+            {featuredProducts && featuredProducts.length > 0 ? (
+              featuredProducts.map((product) => (
+                <div key={product.id} className="card-elevated product-card">
+                  <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden bg-gray-200">
+                    <img
+                      src={product.images?.[0] || 'https://via.placeholder.com/300x300?text=No+Image'}
+                      alt={product.name}
+                      className="w-full h-64 object-cover object-center product-image"
+                    />
                   </div>
-                  <Link
-                    to={`/products/${product.id}`}
-                    className="mt-4 w-full bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 transition-colors duration-200 text-center block"
-                  >
-                    View Details
-                  </Link>
+                  <div className="p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{product.name}</h3>
+                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl font-bold text-primary-600">
+                        {formatPrice(product.price)}
+                      </span>
+                      <div className="flex items-center">
+                        <StarIcon className="w-4 h-4 text-yellow-400" />
+                        <span className="ml-1 text-sm text-gray-600">{product.rating || '5.0'}</span>
+                      </div>
+                    </div>
+                    <Link
+                      to={`/products/${product.id}`}
+                      className="mt-4 w-full bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 transition-colors duration-200 text-center block"
+                    >
+                      View Details
+                    </Link>
+                  </div>
                 </div>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12">
+                {isLoading ? (
+                  <div className="flex flex-col items-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mb-4"></div>
+                    <p className="text-gray-600">Loading featured products...</p>
+                  </div>
+                ) : (
+                  <div className="text-gray-600">
+                    <p className="text-lg mb-2">No featured products available at the moment.</p>
+                    <Link to="/products" className="text-primary-600 hover:text-primary-700">
+                      Browse all products →
+                    </Link>
+                  </div>
+                )}
               </div>
-            ))}
+            )}
           </div>
           <div className="text-center mt-12">
             <Link

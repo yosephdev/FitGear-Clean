@@ -14,10 +14,18 @@ __pycache__/
 .env
 .env.example
 venv/
+.env.local
+.env.production
 .env.test
 .env.test.local
 *.env
 test_credentials.json
+backend/.env
+frontend/.env
+
+# Credentials
+*credentials*
+*secrets* >> .gitignore
 
 # Django migrations
 **/migrations/
@@ -47,7 +55,10 @@ backend_test.py
 PRODUCTION_SETUP.md
 PRODUCTION_SETUP_PUBLIC.md
 update_admin_password.py
-.vercel/
 ENV_SETUP.md
 ENV_SETUP_PUBLIC.md
 API_DOCUMENTATION.md
+
+# Vercel
+.vercel
+.vercel/**

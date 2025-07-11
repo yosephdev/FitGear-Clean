@@ -1615,8 +1615,13 @@ async def get_user_by_id(user_id: str):
     
     return user
 
+from mangum import Mangum
+
+app = FastAPI()
+
+handler = Mangum(app)
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host=HOST, port=PORT)
 
-app = FastAPI()

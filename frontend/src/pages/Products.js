@@ -11,11 +11,13 @@ import {
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
+import ProductSkeleton from '../components/ProductSkeleton';
 
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('grid');
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
@@ -81,6 +83,7 @@ const Products = () => {
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching products:', error);
+      setError('Failed to fetch products. Please try again later.');
       setIsLoading(false);
     }
   };
@@ -132,8 +135,26 @@ const Products = () => {
 
   if (isLoading) {
     return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="container-max px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-8">
+            <div className="h-8 bg-gray-300 rounded w-1/4 animate-pulse"></div>
+            <div className="h-4 bg-gray-300 rounded w-1/2 mt-4 animate-pulse"></div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <ProductSkeleton key={i} />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="loading-spinner"></div>
+        <div className="text-red-500 text-lg">{error}</div>
       </div>
     );
   }

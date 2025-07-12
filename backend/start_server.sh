@@ -10,16 +10,16 @@ if [ ! -d "/home/yoseph/fit-gear/.venv" ]; then
 fi
 
 # Start MongoDB if not running
-echo "Checking MongoDB status..."
-if ! sudo docker ps --filter name=mongodb-fitgear | grep -q mongodb-fitgear; then
-    echo "Starting MongoDB container..."
-    sudo docker start mongodb-fitgear 2>/dev/null || \
-    sudo docker run -d --name mongodb-fitgear -p 27017:27017 -v mongodb_data:/data/db mongo:6.0
-    echo "MongoDB started successfully!"
-    sleep 2  # Give MongoDB a moment to fully start
-else
-    echo "MongoDB is already running"
-fi
+#echo "Checking MongoDB status..."
+#if ! sudo docker ps --filter name=mongodb-fitgear | grep -q mongodb-fitgear; then
+#    echo "Starting MongoDB container..."
+#    sudo docker start mongodb-fitgear 2>/dev/null || \
+#    sudo docker run -d --name mongodb-fitgear -p 27017:27017 -v mongodb_data:/data/db mongo:6.0
+#    echo "MongoDB started successfully!"
+#    sleep 2  # Give MongoDB a moment to fully start
+#else
+#    echo "MongoDB is already running"
+#fi
 
 # Navigate to backend directory
 cd /home/yoseph/fit-gear/backend

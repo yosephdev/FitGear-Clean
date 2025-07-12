@@ -42,15 +42,21 @@ if not MONGO_URL:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Application startup...")
-    app.state.client = AsyncIOMotorClient(MONGO_URL)
-    app.state.db = app.state.client.fitgear
     try:
+        app.state.client = AsyncIOMotorClient(MONGO_URL, serverSelectionTimeoutMS=5000)
+        app.state.db = app.state.client.fitgear
         await app.state.client.admin.command('ping')
         logger.info("✅ Connected to MongoDB")
         await setup_database(app.state.db)
         logger.info("Application startup completed successfully")
-        yield
-    finally:
+    except Exception as e:
+        logger.error(f"Could not connect to MongoDB: {e}")
+        app.state.client = None
+        app.state.db = None
+    
+    yield
+    
+    if app.state.client:
         logger.info("Application shutdown...")
         app.state.client.close()
         logger.info("MongoDB connection closed.")
@@ -128,6 +134,8 @@ class Product(BaseModel):
 
 # --- Dependency Injection for Database ---
 def get_db(request: Request) -> AsyncIOMotorClient:
+    if request.app.state.db is None:
+        raise HTTPException(status_code=503, detail="Database not connected")
     return request.app.state.db
 
 # --- Utility Functions ---
@@ -273,3 +281,9 @@ async def get_blog_post(post_id: str, db: AsyncIOMotorClient = Depends(get_db)):
 # --- Vercel Handler ---
 from mangum import Mangum
 handler = Mangum(app)
+
+if __name__ == "__main__":
+    import uvicorn
+    PORT = int(os.getenv("PORT", 8001))
+    HOST = os.getenv("HOST", "0.0.0.0")
+    uvicorn.run(app, host=HOST, port=PORT)

@@ -71,11 +71,9 @@ export const productsAPI = {
 export const cartAPI = {
   getCart: () => api.get('/api/cart'),
   addToCart: (productId, quantity) => {
-    console.log('cartAPI.addToCart called with:', { productId, quantity });
     const formData = new FormData();
     formData.append('product_id', productId);
     formData.append('quantity', quantity);
-    console.log('FormData created, sending request to /api/cart/add');
     return api.post('/api/cart/add', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -122,7 +120,6 @@ export const ordersAPI = {
 export const paymentAPI = {
   createPaymentIntent: async (amount) => {
     try {
-      console.log('Creating payment intent for amount:', amount);
       const formData = new FormData();
       formData.append('amount', amount);
       
@@ -132,25 +129,19 @@ export const paymentAPI = {
         }
       });
       
-      console.log('Payment intent response:', response);
-      
       if (!response?.data?.client_secret) {
-        console.error('No client_secret in response:', response);
         throw new Error('Unable to initialize payment. Please try again.');
       }
       
       return response;
     } catch (error) {
-      console.error('Payment intent creation error:', error);
       const errorMsg = extractErrorMessage(error);
-      console.error('Extracted error message:', errorMsg);
       throw new Error(errorMsg);
     }
   },
   
   confirmPayment: async (paymentIntentId, shippingInfo) => {
     try {
-      console.log('Confirming payment for intent:', paymentIntentId);
       const formData = new FormData();
       formData.append('payment_intent_id', paymentIntentId);
       
@@ -164,7 +155,6 @@ export const paymentAPI = {
         country: shippingInfo.country,
       };
       
-      console.log('Shipping address:', shippingAddress);
       formData.append('shipping_address', JSON.stringify(shippingAddress));
       
       const response = await api.post('/api/payment/confirm', formData, {
@@ -173,12 +163,9 @@ export const paymentAPI = {
         }
       });
       
-      console.log('Payment confirmation response:', response);
       return response;
     } catch (error) {
-      console.error('Payment confirmation error:', error);
       const errorMsg = extractErrorMessage(error);
-      console.error('Extracted error message:', errorMsg);
       throw new Error(errorMsg);
     }
   },

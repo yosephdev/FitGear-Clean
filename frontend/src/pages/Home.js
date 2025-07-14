@@ -24,7 +24,7 @@ const Home = () => {
         productsAPI.getProducts({ limit: 4 }),
         blogAPI.getPosts({ limit: 3 }),
       ]);
-      console.log('API Response:', productsResponse);
+
       setFeaturedProducts(productsResponse.data.products || []);
       setBlogPosts(postsResponse.data.posts || []);
     } catch (error) {

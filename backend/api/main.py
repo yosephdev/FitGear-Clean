@@ -3,11 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from typing import Optional
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
 # Environment variables
-MONGO_URL = os.getenv("MONGO_URL", "mongodb+srv://username:password@cluster0.mongodb.net/fitgear?retryWrites=true&w=majority")
+MONGO_URL = os.getenv("MONGO_URL")
+if not MONGO_URL:
+    raise ValueError("MONGO_URL environment variable not set")
 
 # FastAPI app
 app = FastAPI(title="FitGear API", version="1.0.0")
@@ -28,63 +30,41 @@ db = None
 async def get_db():
     global client, db
     if client is None:
-        client = AsyncIOMotorClient(MONGO_URL)
-        db = client.fitgear
-        await init_sample_data()
+        try:
+            client = AsyncIOMotorClient(MONGO_URL, serverSelectionTimeoutMS=5000)
+            db = client.fitgear
+            # Test the connection
+            await client.admin.command('ping')
+            print("✅ Connected to MongoDB")
+            await init_sample_data()
+        except Exception as e:
+            print(f"❌ Failed to connect to MongoDB: {e}")
+            raise
     return db
 
 async def init_sample_data():
     """Initialize sample data if collections are empty"""
     try:
-        if await db.products.count_documents({}) == 0:
-            sample_products = [
-                {
-                    "_id": str(uuid.uuid4()),
-                    "name": "Professional Olympic Barbell",
-                    "description": "High-quality Olympic barbell perfect for deadlifts, squats, and bench press.",
-                    "price": 299.99,
-                    "category": "Strength Training",
-                    "brand": "FitGear Pro",
-                    "images": ["https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500"],
-                    "inventory": 15,
-                    "rating": 4.8,
-                    "reviews_count": 24,
-                    "is_active": True,
-                    "created_at": datetime.utcnow()
-                },
-                {
-                    "_id": str(uuid.uuid4()),
-                    "name": "Premium Yoga Mat",
-                    "description": "Non-slip yoga mat with excellent cushioning and grip.",
-                    "price": 49.99,
-                    "category": "Fitness Accessories",
-                    "brand": "ZenFit",
-                    "images": ["https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500"],
-                    "inventory": 25,
-                    "rating": 4.7,
-                    "reviews_count": 32,
-                    "is_active": True,
-                    "created_at": datetime.utcnow()
-                }
-            ]
+        products_count = await db.products.count_documents({})
+        if products_count == 0:
+            print("No products found, creating sample products...")
+            from sample_data import sample_products
             await db.products.insert_many(sample_products)
-        
-        if await db.blog_posts.count_documents({}) == 0:
-            sample_posts = [
-                {
-                    "_id": str(uuid.uuid4()),
-                    "title": "10 Essential Exercises for Building Strength",
-                    "content": "Discover the fundamental exercises that form the foundation of any strength training program.",
-                    "author": "FitGear Team",
-                    "category": "Strength Training",
-                    "featured_image": "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500",
-                    "is_published": True,
-                    "created_at": datetime.utcnow()
-                }
-            ]
+            print(f"✅ {len(sample_products)} sample products created.")
+        else:
+            print(f"✅ Found {products_count} existing products")
+
+        posts_count = await db.blog_posts.count_documents({})
+        if posts_count == 0:
+            print("No blog posts found, creating sample posts...")
+            from sample_data import sample_posts
             await db.blog_posts.insert_many(sample_posts)
+            print(f"✅ {len(sample_posts)} sample blog posts created.")
+        else:
+            print(f"✅ Found {posts_count} existing blog posts")
     except Exception as e:
-        print(f"Error initializing sample data: {e}")
+        print(f"❌ Error initializing sample data: {e}")
+        raise
 
 @app.get("/")
 async def root():

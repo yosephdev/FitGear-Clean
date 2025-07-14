@@ -94,11 +94,23 @@ app = FastAPI(
 
 # --- Middleware ---
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
+# CORS Configuration
+allowed_origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000", 
+    "https://yosephdev.github.io",
+    "https://fit-gear-frontend.vercel.app",
+    "https://fit-gear-one.vercel.app"
+]
+
+if ENVIRONMENT == "development":
+    allowed_origins.append("*")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -256,7 +268,27 @@ async def get_products(
     products = await db.products.find(query).limit(limit).to_list(length=limit)
     for p in products:
         p["id"] = str(p["_id"])
+        p["_id"] = str(p["_id"])
+        if "created_at" in p:
+            p["created_at"] = p["created_at"].isoformat() if hasattr(p["created_at"], 'isoformat') else str(p["created_at"])
+    
     return {"products": products}
+
+@app.get("/api/products/{product_id}")
+async def get_product(product_id: str, db: AsyncIOMotorClient = Depends(get_db)):
+    product = await db.products.find_one({"_id": product_id, "is_active": True})
+    if not product:
+        try:
+            product = await db.products.find_one({"_id": ObjectId(product_id), "is_active": True})
+        except Exception:
+            pass
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    product["id"] = str(product["_id"])
+    product["_id"] = str(product["_id"])
+    if "created_at" in product:
+        product["created_at"] = product["created_at"].isoformat() if hasattr(product["created_at"], 'isoformat') else str(product["created_at"])
+    return product
 
 @app.get("/api/categories")
 async def get_categories(db: AsyncIOMotorClient = Depends(get_db)):
@@ -268,14 +300,26 @@ async def get_blog_posts(db: AsyncIOMotorClient = Depends(get_db)):
     posts = await db.blog_posts.find({"is_published": True}).to_list(length=100)
     for p in posts:
         p["id"] = str(p["_id"])
+        p["_id"] = str(p["_id"])
+        if "created_at" in p:
+            p["created_at"] = p["created_at"].isoformat() if hasattr(p["created_at"], 'isoformat') else str(p["created_at"])
+    
     return {"posts": posts}
 
 @app.get("/api/blog/{post_id}")
 async def get_blog_post(post_id: str, db: AsyncIOMotorClient = Depends(get_db)):
     post = await db.blog_posts.find_one({"_id": post_id})
     if not post:
+        try:
+            post = await db.blog_posts.find_one({"_id": ObjectId(post_id)})
+        except Exception:
+            pass
+    if not post:
         raise HTTPException(status_code=404, detail="Post not found")
     post["id"] = str(post["_id"])
+    post["_id"] = str(post["_id"])
+    if "created_at" in post:
+        post["created_at"] = post["created_at"].isoformat() if hasattr(post["created_at"], 'isoformat') else str(post["created_at"])
     return post
 
 # --- Vercel Handler ---

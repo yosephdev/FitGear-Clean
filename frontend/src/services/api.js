@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8001');
+const API_BASE_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:8001/api');
 
 // Create axios instance with default config
 const api = axios.create({
@@ -54,66 +54,66 @@ api.interceptors.response.use(
 
 // Auth API
 export const authAPI = {
-  register: (userData) => api.post('/api/auth/register', userData),
-  login: (credentials) => api.post('/api/auth/login', credentials),
-  getCurrentUser: () => api.get('/api/auth/me'),
+  register: (userData) => api.post('/auth/register', userData),
+  login: (credentials) => api.post('/auth/login', credentials),
+  getCurrentUser: () => api.get('/auth/me'),
 };
 
 // Products API
 export const productsAPI = {
-  getProducts: (params = {}) => api.get('/api/products', { params }),
-  getProduct: (id) => api.get(`/api/products/${id}`),
-  createProduct: (productData) => api.post('/api/products', productData),
-  updateProduct: (id, productData) => api.put(`/api/products/${id}`, productData),
-  deleteProduct: (id) => api.delete(`/api/products/${id}`),
-  getCategories: () => api.get('/api/categories'),
+  getProducts: (params = {}) => api.get('/products', { params }),
+  getProduct: (id) => api.get(`/products/${id}`),
+  createProduct: (productData) => api.post('/products', productData),
+  updateProduct: (id, productData) => api.put(`/products/${id}`, productData),
+  deleteProduct: (id) => api.delete(`/products/${id}`),
+  getCategories: () => api.get('/categories'),
 };  // Cart API
 export const cartAPI = {
-  getCart: () => api.get('/api/cart'),
+  getCart: () => api.get('/cart'),
   addToCart: (productId, quantity) => {
     const formData = new FormData();
     formData.append('product_id', productId);
     formData.append('quantity', quantity);
-    return api.post('/api/cart/add', formData, {
+    return api.post('/cart/add', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
   },
-  removeFromCart: (productId) => api.delete(`/api/cart/remove/${productId}`),
+  removeFromCart: (productId) => api.delete(`/cart/remove/${productId}`),
   updateCartItem: (productId, quantity) => {
     const formData = new FormData();
     formData.append('quantity', quantity);
-    return api.put(`/api/cart/update/${productId}`, formData);
+    return api.put(`/cart/update/${productId}`, formData);
   },
 };
 
 // Blog API
 export const blogAPI = {
-  getPosts: (params = {}) => api.get('/api/blog', { params }),
-  getPost: (id) => api.get(`/api/blog/${id}`),
-  createPost: (postData) => api.post('/api/blog', postData),
-  updatePost: (id, postData) => api.put(`/api/blog/${id}`, postData),
-  deletePost: (id) => api.delete(`/api/blog/${id}`),
+  getPosts: (params = {}) => api.get('/blog', { params }),
+  getPost: (id) => api.get(`/blog/${id}`),
+  createPost: (postData) => api.post('/blog', postData),
+  updatePost: (id, postData) => api.put(`/blog/${id}`, postData),
+  deletePost: (id) => api.delete(`/blog/${id}`),
 };
 
 // Wishlist API
 export const wishlistAPI = {
-  getWishlist: () => api.get('/api/wishlist'),
+  getWishlist: () => api.get('/wishlist'),
   addToWishlist: (productId) => {
     const formData = new FormData();
     formData.append('product_id', productId);
-    return api.post('/api/wishlist/add', formData);
+    return api.post('/wishlist/add', formData);
   },
-  removeFromWishlist: (productId) => api.delete(`/api/wishlist/remove/${productId}`),
+  removeFromWishlist: (productId) => api.delete(`/wishlist/remove/${productId}`),
 };
 
 // Orders API
 export const ordersAPI = {
-  getOrders: () => api.get('/api/orders'),
-  getOrder: (id) => api.get(`/api/orders/${id}`),
-  createOrder: (orderData) => api.post('/api/orders', orderData),
-  updateOrderStatus: (id, status) => api.put(`/api/orders/${id}/status`, { status }),
+  getOrders: () => api.get('/orders'),
+  getOrder: (id) => api.get(`/orders/${id}`),
+  createOrder: (orderData) => api.post('/orders', orderData),
+  updateOrderStatus: (id, status) => api.put(`/orders/${id}/status`, { status }),
 };
 
 // Payment API with improved error handling
@@ -123,7 +123,7 @@ export const paymentAPI = {
       const formData = new FormData();
       formData.append('amount', amount);
       
-      const response = await api.post('/api/payment/create-intent', formData, {
+      const response = await api.post('/payment/create-intent', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         }
@@ -157,7 +157,7 @@ export const paymentAPI = {
       
       formData.append('shipping_address', JSON.stringify(shippingAddress));
       
-      const response = await api.post('/api/payment/confirm', formData, {
+      const response = await api.post('/payment/confirm', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         }
@@ -173,16 +173,16 @@ export const paymentAPI = {
 
 // Reviews API
 export const reviewsAPI = {
-  getProductReviews: (productId) => api.get(`/api/products/${productId}/reviews`),
+  getProductReviews: (productId) => api.get(`/products/${productId}/reviews`),
   addReview: (productId, rating, comment) => {
     const formData = new FormData();
     formData.append('product_id', productId);
     formData.append('rating', rating);
     formData.append('comment', comment);
-    return api.post('/api/reviews', formData);
+    return api.post('/reviews', formData);
   },
-  updateReview: (id, reviewData) => api.put(`/api/reviews/${id}`, reviewData),
-  deleteReview: (id) => api.delete(`/api/reviews/${id}`),
+  updateReview: (id, reviewData) => api.put(`/reviews/${id}`, reviewData),
+  deleteReview: (id) => api.delete(`/reviews/${id}`),
 };
 
 // Utility functions

@@ -14,7 +14,6 @@ import toast from 'react-hot-toast';
 import { getProductImage } from '../services/imageService';
 
 const ProductCard = ({ product, viewMode = 'grid' }) => {
-  console.log("ProductCard received product:", product); // <-- DEBUGGING LINE
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { isAuthenticated } = useAuth();

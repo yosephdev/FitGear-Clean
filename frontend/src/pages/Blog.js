@@ -22,15 +22,16 @@ const Blog = () => {
       }
       
       const response = await blogAPI.getPosts(params);
-      setPosts(response.data.posts);
+      setPosts(response.data.posts || []);
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching blog posts:', error);
+      setPosts([]);
       setIsLoading(false);
     }
   };
 
-  const filteredPosts = posts.filter(post =>
+  const filteredPosts = (posts || []).filter(post =>
     post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     post.content.toLowerCase().includes(searchQuery.toLowerCase())
   );

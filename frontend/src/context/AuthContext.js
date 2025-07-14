@@ -4,8 +4,19 @@ import toast from 'react-hot-toast';
 
 const AuthContext = createContext();
 
+const safeJSONParse = (item) => {
+  if (typeof item !== 'string') {
+    return null;
+  }
+  try {
+    return JSON.parse(item);
+  } catch (e) {
+    return null;
+  }
+};
+
 const initialState = {
-  user: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null,
+  user: safeJSONParse(localStorage.getItem('user')),
   token: localStorage.getItem('token'),
   isLoading: !!localStorage.getItem('token'), // Set loading to true if token exists
   isAuthenticated: false, // This will be updated after token verification

@@ -8,8 +8,8 @@ import uuid
 
 # Environment variables
 MONGO_URL = os.getenv("MONGO_URL")
-if not MONGO_URL:
-    raise ValueError("MONGO_URL environment variable not set")
+print(f"🔍 MONGO_URL set: {'Yes' if MONGO_URL else 'No'}")
+# Don't raise error here, handle it in get_db() function
 
 # FastAPI app
 app = FastAPI(title="FitGear API", version="1.0.0")
@@ -31,6 +31,11 @@ async def get_db():
     global client, db
     if client is None:
         try:
+            if not MONGO_URL:
+                print("❌ MONGO_URL not set")
+                raise ValueError("MONGO_URL environment variable not set")
+
+            print(f"🔄 Connecting to MongoDB...")
             client = AsyncIOMotorClient(MONGO_URL, serverSelectionTimeoutMS=5000)
             db = client.fitgear
             # Test the connection
@@ -73,6 +78,16 @@ async def root():
 @app.get("/api")
 async def api_root():
     return {"message": "FitGear API is running!", "version": "1.0.0"}
+
+@app.get("/api/test")
+async def test_endpoint():
+    """Simple test endpoint that doesn't require database"""
+    return {
+        "status": "success",
+        "message": "API is working!",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "environment": os.getenv("VERCEL_ENV", "unknown")
+    }
 
 @app.get("/api/health")
 async def health_check():

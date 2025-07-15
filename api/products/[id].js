@@ -1,4 +1,4 @@
-// Sample products data
+// Sample products data (same as in products.js)
 const sampleProducts = [
   {
     id: "1",
@@ -74,51 +74,6 @@ const sampleProducts = [
     specifications: {"weight": "16kg", "material": "Cast Iron"},
     is_active: true,
     created_at: new Date().toISOString()
-  },
-  {
-    id: "6",
-    name: "Smart Treadmill",
-    description: "Interactive treadmill with a large touch screen and virtual running trails.",
-    price: 1299.99,
-    category: "Cardio Equipment",
-    brand: "CardioMax",
-    images: ["https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500"],
-    inventory: 10,
-    rating: 4.9,
-    reviews_count: 38,
-    specifications: {"speed": "0-12 mph", "incline": "0-15%", "screen": "22-inch HD"},
-    is_active: true,
-    created_at: new Date().toISOString()
-  },
-  {
-    id: "7",
-    name: "Men's Workout Tank",
-    description: "Moisture-wicking and breathable tank top for maximum comfort during workouts.",
-    price: 34.99,
-    category: "Apparel",
-    brand: "FitGear Wear",
-    images: ["https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500"],
-    inventory: 75,
-    rating: 4.6,
-    reviews_count: 42,
-    specifications: {"material": "Polyester/Spandex Blend"},
-    is_active: true,
-    created_at: new Date().toISOString()
-  },
-  {
-    id: "8",
-    name: "Women's Yoga Pants",
-    description: "High-waisted and squat-proof yoga pants for ultimate flexibility and support.",
-    price: 59.99,
-    category: "Apparel",
-    brand: "ZenFit",
-    images: ["https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500"],
-    inventory: 60,
-    rating: 4.8,
-    reviews_count: 95,
-    specifications: {"material": "Nylon/Spandex Blend"},
-    is_active: true,
-    created_at: new Date().toISOString()
   }
 ];
 
@@ -134,19 +89,19 @@ module.exports = (req, res) => {
   }
 
   if (req.method === 'GET') {
-    const { category, limit = 50 } = req.query;
+    const { id } = req.query;
     
-    let products = sampleProducts.filter(p => p.is_active);
+    const product = sampleProducts.find(p => p.id === id && p.is_active);
     
-    if (category) {
-      products = products.filter(p => p.category === category);
+    if (!product) {
+      res.status(404).json({ 
+        error: 'Product not found',
+        message: `Product with ID ${id} does not exist`
+      });
+      return;
     }
     
-    products = products.slice(0, parseInt(limit));
-    
-    res.status(200).json({
-      products: products
-    });
+    res.status(200).json(product);
   } else {
     res.status(405).json({ error: 'Method not allowed' });
   }

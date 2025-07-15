@@ -1,0 +1,13 @@
+{
+  "name": "fitgear",
+  "version": "1.0.0",
+  "description": "FitGear e-commerce platform",
+  "main": "index.js",
+  "scripts": {
+    "build": "cd frontend && npm run build",
+    "start": "cd frontend && npm start"
+  },
+  "keywords": ["fitness", "ecommerce", "react"],
+  "author": "FitGear Team",
+  "license": "MIT"
+}

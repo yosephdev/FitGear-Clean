@@ -70,14 +70,19 @@ async def init_sample_data():
 async def root():
     return {"message": "FitGear API is running!", "version": "1.0.0"}
 
+@app.get("/api")
+async def api_root():
+    return {"message": "FitGear API is running!", "version": "1.0.0"}
+
 @app.get("/api/health")
 async def health_check():
     try:
         db = await get_db()
         await db.command("ping")
-        return {"status": "healthy", "database": "connected"}
+        return {"status": "healthy", "database": "connected", "timestamp": datetime.now(timezone.utc).isoformat()}
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        print(f"Health check error: {e}")
+        return {"status": "error", "message": str(e), "timestamp": datetime.now(timezone.utc).isoformat()}
 
 @app.get("/api/products")
 async def get_products(category: Optional[str] = None, limit: int = 50):

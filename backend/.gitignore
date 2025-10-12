@@ -1,1 +1,64 @@
+# Python files
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.env
+*venv
+.env.test
+
+# Django static and media files
+/static/
+/media/
+
+# Environment variables
+.env
+.env.example
+venv/
+.env.local
+.env.production
+.env.test
+.env.test.local
+*.env
+test_credentials.json
+backend/.env
+frontend/.env
+
+# Credentials
+*credentials*
+*secrets* >> .gitignore
+
+# Django migrations
+**/migrations/
+
+# VS Code
+.vscode/
+
+# Byte-compiled / optimized / DLL files
+*.pyc
+*.pyo
+*.pyd
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Logs
+*.log
+fitgear/logs/
+
+# Admin credentials (sensitive)
+ADMIN_CREDENTIALS.md
+backend_test.py
+
+# Production configuration (contains secrets)
+PRODUCTION_SETUP.md
+PRODUCTION_SETUP_PUBLIC.md
+update_admin_password.py
+ENV_SETUP.md
+ENV_SETUP_PUBLIC.md
+API_DOCUMENTATION.md
+
+# Vercel
 .vercel
+.vercel/**

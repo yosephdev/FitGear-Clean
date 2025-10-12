@@ -24,5 +24,9 @@ jobs:
         env:
           MONGO_URL: ${{ secrets.MONGO_URL }}
         run: |
+          if [ -z "${MONGO_URL}" ]; then
+            echo "Error: MONGO_URL secret is not set."
+            exit 1
+          fi
           echo "Running seed_prod_db.py"
           python backend/scripts/seed_prod_db.py

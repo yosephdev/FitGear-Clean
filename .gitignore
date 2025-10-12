@@ -62,3 +62,4 @@ API_DOCUMENTATION.md
 # Vercel
 .vercel
 .vercel/**
+.env*.local

@@ -1,0 +1,26 @@
+name: Deploy Backend to Vercel (manual)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Vercel Deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "Missing Vercel secrets (VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID)"
+            exit 1
+          fi
+
+          echo "Triggering deployment via Vercel API..."
+          curl -s -X POST "https://api.vercel.com/v13/deployments" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"name":"fit-gear-backend","target":"production","gitSource":{"type":"github","org":"yosephdev","repo":"FitGear","ref":"main","sha":""},"projectId":"'$VERCEL_PROJECT_ID'","files":[],"branch":"main","meta":{"directory":"backend"}}' \
+            | jq '.' || true

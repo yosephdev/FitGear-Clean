@@ -17,38 +17,46 @@ app = FastAPI(title="FitGear API", version="1.0.0")
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://fit-gear-one.vercel.app",
+        "https://fit-gear.vercel.app",
+        "http://localhost:3000"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Database connection
-client = None
-db = None
-
+# Avoid re-using an AsyncIOMotorClient across serverless invocations. In
+# serverless platforms the event loop from a previous invocation can be
+# closed, and a motor client created on that loop will raise "Event loop is
+# closed" when reused. Create a fresh client per invocation.
 async def get_db():
-    global client, db
-    if client is None:
-        try:
-            if not MONGO_URL:
-                print("❌ MONGO_URL not set")
-                raise ValueError("MONGO_URL environment variable not set")
+    if not MONGO_URL:
+        print("❌ MONGO_URL not set")
+        raise ValueError("MONGO_URL environment variable not set")
 
-            print(f"🔄 Connecting to MongoDB...")
-            client = AsyncIOMotorClient(MONGO_URL, serverSelectionTimeoutMS=5000)
-            db = client.fitgear
-            # Test the connection
-            await client.admin.command('ping')
-            print("✅ Connected to MongoDB")
-            await init_sample_data()
-        except Exception as e:
-            print(f"❌ Failed to connect to MongoDB: {e}")
-            raise
-    return db
+    try:
+        print("🔄 Connecting to MongoDB (new client for current invocation)...")
+        # Create a fresh client for this invocation
+        client = AsyncIOMotorClient(MONGO_URL, serverSelectionTimeoutMS=5000)
+        db = client.fitgear
+        # Test the connection
+        await client.admin.command('ping')
+        print("✅ Connected to MongoDB")
+        # Ensure sample data exists (idempotent)
+        await init_sample_data(db)
+        return db
+    except Exception as e:
+        print(f"❌ Failed to connect to MongoDB: {e}")
+        raise
 
-async def init_sample_data():
-    """Initialize sample data if collections are empty"""
+async def init_sample_data(db):
+    """Initialize sample data if collections are empty on the provided db
+
+    This function is idempotent and safe to call on every fresh connection.
+    """
     try:
         products_count = await db.products.count_documents({})
         if products_count == 0:

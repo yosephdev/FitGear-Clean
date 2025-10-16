@@ -58,6 +58,7 @@ update_admin_password.py
 ENV_SETUP.md
 ENV_SETUP_PUBLIC.md
 API_DOCUMENTATION.md
+docs/
 
 # Vercel
 .vercel

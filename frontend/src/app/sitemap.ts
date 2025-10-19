@@ -1,27 +1,24 @@
 import { MetadataRoute } from 'next';
-import { API_BASE_URL } from '@/lib/utils';
 
-type Product = { slug: string; updatedAt: string };
-
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // Fetch your products to generate dynamic sitemap entries
-  const res = await fetch(`${API_BASE_URL}/products`);
-  const products: Product[] = await res.json();
-
-  const productEntries: MetadataRoute.Sitemap = products.map((product) => ({
-    url: `https://fitgear.com/products/${product.slug}`,
-    lastModified: new Date(product.updatedAt),
-  }));
-
+export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
-      url: 'https://fitgear.com',
+      url: 'https://fit-gear-one.vercel.app',
       lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 1,
     },
     {
-      url: 'https://fitgear.com/about',
+      url: 'https://fit-gear-one.vercel.app/about',
       lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
     },
-    ...productEntries,
+    {
+      url: 'https://fit-gear-one.vercel.app/products',
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.5,
+    },
   ];
 }

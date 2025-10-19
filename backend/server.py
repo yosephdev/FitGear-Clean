@@ -111,6 +111,8 @@ allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",") i
 if ENVIRONMENT == "development" and "http://localhost:3000" not in allowed_origins:
     allowed_origins.append("http://localhost:3000")
 
+logger.info(f"Configured ALLOWED_ORIGINS: {allowed_origins}")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,

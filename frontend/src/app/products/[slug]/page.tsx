@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import { Product } from '../../types/product';
+import { Product } from '../../../types/product';
 
-const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3001/api';
+const API_BASE_URL = process.env.API_BASE_URL || 'https://fit-gear-backend.vercel.app/api';
 
 interface ProductPageProps {
   params: Promise<{
@@ -10,21 +10,64 @@ interface ProductPageProps {
   }>;
 }
 
-// Generate static params
+// Generate static params with fallback
 export async function generateStaticParams() {
-  const res = await fetch(`${API_BASE_URL}/products`);
-  const products: Product[] = await res.json();
-
-  return products.map((product) => ({
-    slug: product.slug,
-  }));
+  try {
+    const res = await fetch(`${API_BASE_URL}/products`, {
+      // Add cache and timeout for build time
+      next: { revalidate: 3600 }, // 1 hour
+      signal: AbortSignal.timeout(5000) // 5 second timeout
+    });
+    
+    if (!res.ok) {
+      console.warn('Failed to fetch products for static generation');
+      return [];
+    }
+    
+    const contentType = res.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.warn('Backend returned non-JSON response during build');
+      return [];
+    }
+    
+    const products: Product[] = await res.json();
+    
+    return products.map((product) => ({
+      slug: product.slug,
+    }));
+  } catch (error) {
+    console.warn('Error during static generation, using fallback:', error);
+    // Return some fallback slugs to allow build to proceed
+    return [
+      { slug: 'premium-yoga-mat' },
+      { slug: 'adjustable-dumbbells' },
+      { slug: 'resistance-bands-set' }
+    ];
+  }
 }
 
-// Data fetching function
+// Data fetching function with better error handling
 async function getProduct(slug: string): Promise<Product | null> {
-  const res = await fetch(`${API_BASE_URL}/products/${slug}`);
-  if (!res.ok) return null;
-  return res.json();
+  try {
+    const res = await fetch(`${API_BASE_URL}/products/${slug}`, {
+      next: { revalidate: 60 } // 1 minute
+    });
+    
+    if (!res.ok) {
+      return null;
+    }
+    
+    const contentType = res.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.warn('Backend returned non-JSON response for product:', slug);
+      return null;
+    }
+    
+    return await res.json();
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    return null;
+  }
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {

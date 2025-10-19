@@ -2,20 +2,55 @@ import { Suspense } from 'react';
 import ProductCard from '../components/ProductCard';
 import { Product } from '../types/product';
 
-// Define the API base URL
-const API_BASE_URL = process.env['API_BASE_URL'] || 'http://localhost:3001/api';
+const API_BASE_URL = process.env.API_BASE_URL || 'https://fit-gear-backend.vercel.app/api';
 
-// Fetch products with proper typing
-async function getProducts(): Promise<Product[]> {
-  const res = await fetch(`${API_BASE_URL}/products`, {
-    next: { revalidate: 60 } // Cache for 60 seconds
-  });
-  
-  if (!res.ok) {
-    throw new Error('Failed to fetch products');
+// Sample fallback products for when backend is down
+const fallbackProducts: Product[] = [
+  {
+    product_id: "1",
+    name: "Premium Yoga Mat",
+    price: 49.99,
+    description: "High-quality non-slip yoga mat for all your fitness needs",
+    images: ["https://via.placeholder.com/400x400?text=Yoga+Mat"],
+    category: "yoga",
+    slug: "premium-yoga-mat",
+    stock: 50,
+    featured: true
+  },
+  {
+    product_id: "2",
+    name: "Adjustable Dumbbells", 
+    price: 129.99,
+    description: "Space-saving adjustable dumbbell set for home workouts",
+    images: ["https://via.placeholder.com/400x400?text=Dumbbells"],
+    category: "weights",
+    slug: "adjustable-dumbbells",
+    stock: 25,
+    featured: true
   }
-  
-  return res.json();
+];
+
+async function getProducts(): Promise<Product[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/products`, {
+      next: { revalidate: 60 }
+    });
+    
+    if (!res.ok) {
+      throw new Error('Failed to fetch products');
+    }
+    
+    const contentType = res.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.warn('Backend returned non-JSON response, using fallback data');
+      return fallbackProducts;
+    }
+    
+    return await res.json();
+  } catch (error) {
+    console.warn('Error fetching products, using fallback data:', error);
+    return fallbackProducts;
+  }
 }
 
 // Loading component for suspense

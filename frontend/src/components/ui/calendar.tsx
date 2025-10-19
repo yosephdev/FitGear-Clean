@@ -1,31 +1,26 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import { cn } from '../../lib/utils'
+import * as React from 'react';
+import { cn } from '../../lib/utils';
 
 /**
  * Calendar Component Placeholder
- * 
+ *
  * This component requires the 'react-day-picker' package to be installed.
  * To enable full calendar functionality, run:
  * npm install react-day-picker
- * 
+ *
  * For now, this is a placeholder that won't break the build.
  */
 
 interface CalendarProps {
-  className?: string
-  mode?: 'single' | 'multiple' | 'range'
-  selected?: Date | Date[]
-  onSelect?: (date: Date | Date[] | undefined) => void
+  className?: string;
+  mode?: 'single' | 'multiple' | 'range';
+  selected?: Date | Date[];
+  onSelect?: (date: Date | Date[] | undefined) => void;
 }
 
-function Calendar({
-  className,
-  mode = 'single',
-  selected,
-  onSelect,
-}: CalendarProps) {
+function Calendar({ className, mode = 'single', selected, onSelect }: CalendarProps) {
   return (
     <div className={cn('p-3 bg-white rounded-md border', className)}>
       <div className="text-center">
@@ -42,9 +37,9 @@ function Calendar({
         )}
       </div>
     </div>
-  )
+  );
 }
 
-Calendar.displayName = 'Calendar'
+Calendar.displayName = 'Calendar';
 
-export { Calendar }
+export { Calendar };

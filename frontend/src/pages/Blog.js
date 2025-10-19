@@ -20,7 +20,7 @@ const Blog = () => {
       if (selectedCategory) {
         params.category = selectedCategory;
       }
-      
+
       const response = await blogAPI.getPosts(params);
       setPosts(response.data.posts || []);
       setIsLoading(false);
@@ -31,9 +31,10 @@ const Blog = () => {
     }
   };
 
-  const filteredPosts = (posts || []).filter(post =>
-    post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    post.content.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredPosts = (posts || []).filter(
+    (post) =>
+      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.content.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const categories = ['Strength Training', 'Home Gym', 'Nutrition', 'Cardio', 'Recovery'];
@@ -51,11 +52,10 @@ const Blog = () => {
       <div className="container-max px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4 font-heading">
-            FitGear Blog
-          </h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4 font-heading">FitGear Blog</h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Discover the latest fitness tips, workout routines, and equipment guides to help you reach your goals.
+            Discover the latest fitness tips, workout routines, and equipment guides to help you
+            reach your goals.
           </p>
         </div>
 
@@ -100,15 +100,21 @@ const Blog = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredPosts.map((post) => (
-              <article key={post.id} className="blog-card bg-white rounded-lg shadow-md overflow-hidden">
+              <article
+                key={post.id}
+                className="blog-card bg-white rounded-lg shadow-md overflow-hidden"
+              >
                 <div className="aspect-w-16 aspect-h-9">
                   <img
-                    src={post.featured_image || 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500'}
+                    src={
+                      post.featured_image ||
+                      'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500'
+                    }
                     alt={post.title}
                     className="w-full h-48 object-cover object-center"
                   />
                 </div>
-                
+
                 <div className="p-6">
                   <div className="flex items-center space-x-2 text-sm text-gray-500 mb-3">
                     <span className="px-2 py-1 bg-primary-100 text-primary-800 rounded-full text-xs font-medium">
@@ -117,7 +123,7 @@ const Blog = () => {
                   </div>
 
                   <h2 className="text-xl font-semibold text-gray-900 mb-3 font-heading">
-                    <Link 
+                    <Link
                       to={`/blog/${post.id}`}
                       className="hover:text-primary-600 transition-colors duration-200"
                     >

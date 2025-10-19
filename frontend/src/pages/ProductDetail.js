@@ -16,6 +16,7 @@ import {
 import { StarIcon as StarIconSolid, HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
 import { getProductImage } from '../services/imageService';
+import { Button } from '../components/ui/button.tsx';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -38,28 +39,18 @@ const ProductDetail = () => {
       setIsLoading(true);
       const response = await productsAPI.getProduct(id);
       setProduct(response.data);
-      setIsLoading(false);
     } catch (error) {
       console.error('Error fetching product:', error);
+    } finally {
       setIsLoading(false);
     }
   };
 
   const handleAddToCart = async () => {
-    if (!isAuthenticated) {
-      toast.error('Please login to add items to cart');
-      return;
-    }
-    
     await addToCart(product.id, quantity);
   };
 
   const handleBuyNow = async () => {
-    if (!isAuthenticated) {
-      toast.error('Please login to purchase');
-      return;
-    }
-    
     await addToCart(product.id, quantity);
     // Navigate to checkout
     window.location.href = '/checkout';
@@ -90,47 +81,53 @@ const ProductDetail = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-semibold text-gray-900">Product not found</h2>
-          <p className="mt-2 text-gray-600">The product you're looking for doesn't exist.</p>
-          <Link
-            to="/products"
-            className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
-          >
-            <ArrowLeftIcon className="h-4 w-4 mr-2" />
-            Back to Products
+          <h2 className="text-2xl font-semibold text-foreground">Product not found</h2>
+          <p className="mt-2 text-muted-foreground">
+            The product you're looking for doesn't exist.
+          </p>
+          <Link to="/products">
+            <Button className="mt-4">
+              <ArrowLeftIcon className="h-4 w-4 mr-2" />
+              Back to Products
+            </Button>
           </Link>
         </div>
       </div>
     );
   }
 
-  const images = product.images && product.images.length > 0 
-    ? product.images.map(getProductImage) 
-    : ['https://via.placeholder.com/600x600?text=No+Image'];
+  const images =
+    product.images && product.images.length > 0
+      ? product.images.map(getProductImage)
+      : ['https://via.placeholder.com/600x600?text=No+Image'];
 
   const inStock = product.inventory > 0;
   const currentCartQuantity = getItemQuantity(product.id);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container-max px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <nav className="flex mb-8" aria-label="Breadcrumb">
           <ol className="flex items-center space-x-4">
             <li>
-              <Link to="/" className="text-gray-400 hover:text-gray-500">Home</Link>
+              <Link to="/" className="text-muted-foreground hover:text-foreground">
+                Home
+              </Link>
             </li>
             <li>
-              <span className="text-gray-400">/</span>
+              <span className="text-muted-foreground">/</span>
             </li>
             <li>
-              <Link to="/products" className="text-gray-400 hover:text-gray-500">Products</Link>
+              <Link to="/products" className="text-muted-foreground hover:text-foreground">
+                Products
+              </Link>
             </li>
             <li>
-              <span className="text-gray-400">/</span>
+              <span className="text-muted-foreground">/</span>
             </li>
             <li>
-              <span className="text-gray-900 font-medium">{product.name}</span>
+              <span className="text-foreground font-medium">{product.name}</span>
             </li>
           </ol>
         </nav>
@@ -138,7 +135,7 @@ const ProductDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Product Images */}
           <div>
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="bg-card rounded-lg shadow-md overflow-hidden">
               <div className="aspect-w-1 aspect-h-1">
                 <img
                   src={images[selectedImage]}
@@ -147,23 +144,22 @@ const ProductDetail = () => {
                 />
               </div>
             </div>
-            
+
             {images.length > 1 && (
               <div className="mt-4 grid grid-cols-4 gap-2">
                 {images.map((image, index) => (
-                  <button
+                  <Button
                     key={index}
+                    variant={selectedImage === index ? 'default' : 'outline'}
                     onClick={() => setSelectedImage(index)}
-                    className={`aspect-w-1 aspect-h-1 rounded-lg overflow-hidden ${
-                      selectedImage === index ? 'ring-2 ring-primary-500' : ''
-                    }`}
+                    className="aspect-w-1 aspect-h-1 p-0 h-20 overflow-hidden"
                   >
                     <img
                       src={image}
                       alt={`${product.name} ${index + 1}`}
-                      className="w-full h-20 object-cover object-center"
+                      className="w-full h-full object-cover object-center"
                     />
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}
@@ -171,21 +167,33 @@ const ProductDetail = () => {
 
           {/* Product Information */}
           <div>
-            <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="bg-card rounded-lg shadow-md p-6">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900 font-heading">
+                  <h1 className="text-3xl font-bold text-foreground font-heading">
                     {product.name}
                   </h1>
-                  <p className="text-lg text-gray-600 mt-1">{product.brand}</p>
+                  <p className="text-lg text-muted-foreground mt-1">{product.brand}</p>
                 </div>
                 <div className="flex space-x-2">
-                  <button className="p-2 text-gray-400 hover:text-red-500 transition-colors">
-                    <HeartIcon className="h-6 w-6" />
-                  </button>
-                  <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                  <Button size="icon" variant="ghost" onClick={handleWishlistToggle}>
+                    {isInWishlist(product.id) ? (
+                      <HeartIconSolid className="h-6 w-6 text-red-500" />
+                    ) : (
+                      <HeartIcon className="h-6 w-6" />
+                    )}
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() =>
+                      navigator.share
+                        ? navigator.share({ title: product.name, url: window.location.href })
+                        : toast.info('Share feature not available')
+                    }
+                  >
                     <ShareIcon className="h-6 w-6" />
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -196,41 +204,41 @@ const ProductDetail = () => {
                     <StarIconSolid
                       key={i}
                       className={`h-5 w-5 ${
-                        i < Math.floor(product.rating) ? 'text-yellow-400' : 'text-gray-300'
+                        i < Math.floor(product.rating) ? 'text-yellow-400' : 'text-muted'
                       }`}
                     />
                   ))}
                 </div>
-                <span className="ml-2 text-sm text-gray-600">
+                <span className="ml-2 text-sm text-muted-foreground">
                   {product.rating} ({product.reviews_count} reviews)
                 </span>
               </div>
 
               {/* Price */}
               <div className="mb-6">
-                <div className="text-3xl font-bold text-primary-600">
-                  {formatPrice(product.price)}
-                </div>
-                <p className="text-sm text-gray-500 mt-1">
+                <div className="text-3xl font-bold text-primary">{formatPrice(product.price)}</div>
+                <p className="text-sm text-muted-foreground mt-1">
                   Free shipping on orders over $100
                 </p>
               </div>
 
               {/* Description */}
               <div className="mb-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Description</h3>
-                <p className="text-gray-700 leading-relaxed">{product.description}</p>
+                <h3 className="text-lg font-medium text-foreground mb-2">Description</h3>
+                <p className="text-foreground leading-relaxed">{product.description}</p>
               </div>
 
               {/* Specifications */}
               {product.specifications && Object.keys(product.specifications).length > 0 && (
                 <div className="mb-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Specifications</h3>
+                  <h3 className="text-lg font-medium text-foreground mb-2">Specifications</h3>
                   <dl className="grid grid-cols-1 gap-2">
                     {Object.entries(product.specifications).map(([key, value]) => (
                       <div key={key} className="flex justify-between">
-                        <dt className="text-gray-600 capitalize">{key.replace('_', ' ')}:</dt>
-                        <dd className="text-gray-900 font-medium">{value}</dd>
+                        <dt className="text-muted-foreground capitalize">
+                          {key.replace('_', ' ')}:
+                        </dt>
+                        <dd className="text-foreground font-medium">{value}</dd>
                       </div>
                     ))}
                   </dl>
@@ -240,14 +248,14 @@ const ProductDetail = () => {
               {/* Quantity and Add to Cart */}
               <div className="mb-6">
                 <div className="flex items-center space-x-4 mb-4">
-                  <label htmlFor="quantity" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="quantity" className="text-sm font-medium text-foreground">
                     Quantity:
                   </label>
                   <select
                     id="quantity"
                     value={quantity}
                     onChange={(e) => setQuantity(parseInt(e.target.value))}
-                    className="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="border border-input rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-ring bg-background"
                   >
                     {[...Array(Math.min(10, product.inventory))].map((_, i) => (
                       <option key={i + 1} value={i + 1}>
@@ -255,35 +263,44 @@ const ProductDetail = () => {
                       </option>
                     ))}
                   </select>
-                  
-                  <span className="text-sm text-gray-600">
-                    {product.inventory} in stock
-                  </span>
+
+                  {inStock ? (
+                    <span className="text-sm font-medium text-secondary bg-secondary/10 px-3 py-1 rounded-full">
+                      {product.inventory} in stock
+                    </span>
+                  ) : (
+                    <span className="text-sm font-medium text-destructive bg-destructive/10 px-3 py-1 rounded-full">
+                      Out of stock
+                    </span>
+                  )}
                 </div>
 
                 {currentCartQuantity > 0 && (
-                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
-                    <p className="text-sm text-green-800">
+                  <div className="mb-4 p-3 bg-secondary/10 border border-secondary/20 rounded-md">
+                    <p className="text-sm text-secondary">
                       {currentCartQuantity} item(s) already in cart
                     </p>
                   </div>
                 )}
 
                 <div className="flex space-x-4">
-                  <button
+                  <Button
                     onClick={handleAddToCart}
                     disabled={!inStock}
-                    className="flex-1 bg-primary-600 text-white py-3 px-6 rounded-md hover:bg-primary-700 transition-colors duration-200 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    size="lg"
+                    className="flex-1"
                   >
                     {inStock ? 'Add to Cart' : 'Out of Stock'}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={handleBuyNow}
                     disabled={!inStock}
-                    className="flex-1 bg-secondary-600 text-white py-3 px-6 rounded-md hover:bg-secondary-700 transition-colors duration-200 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    variant="secondary"
+                    size="lg"
+                    className="flex-1"
                   >
                     Buy Now
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -315,9 +332,7 @@ const ProductDetail = () => {
 
         {/* Related Products Section */}
         <div className="mt-16">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8 font-heading">
-            Related Products
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-8 font-heading">Related Products</h2>
           <div className="text-center text-gray-500 py-12">
             <p className="text-lg">Related products coming soon...</p>
           </div>

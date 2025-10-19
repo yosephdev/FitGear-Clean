@@ -1,18 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Button } from './ui/button.tsx';
+import { PhoneIcon, EnvelopeIcon, MapPinIcon } from '@heroicons/react/24/outline';
 
-import {
-  PhoneIcon,
-  EnvelopeIcon,
-  MapPinIcon
-} from '@heroicons/react/24/outline';
-
-import {
-  FaFacebookF,
-  FaInstagram,
-  FaTwitter,
-  FaYoutube
-} from 'react-icons/fa';
+import { FaFacebookF, FaInstagram, FaTwitter, FaYoutube } from 'react-icons/fa';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -58,8 +49,8 @@ const Footer = () => {
               <span className="text-xl font-bold font-heading">FitGear</span>
             </div>
             <p className="text-gray-300 mb-6 text-sm leading-relaxed">
-              Your premier destination for high-quality fitness equipment and accessories.
-              We're committed to helping you achieve your fitness goals with the best gear available.
+              Your premier destination for high-quality fitness equipment and accessories. We're
+              committed to helping you achieve your fitness goals with the best gear available.
             </p>
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
@@ -135,21 +126,18 @@ const Footer = () => {
             <div>
               <h3 className="text-lg font-semibold mb-2">Stay Updated</h3>
               <p className="text-gray-300 text-sm">
-                Subscribe to our newsletter for the latest fitness tips, product launches, and exclusive offers.
+                Subscribe to our newsletter for the latest fitness tips, product launches, and
+                exclusive offers.
               </p>
             </div>
             <form className="flex flex-col sm:flex-row gap-3">
               <input
                 type="email"
                 placeholder="Enter your email"
+                aria-label="Email for newsletter"
                 className="flex-1 px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
-              <button
-                type="submit"
-                className="px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors duration-200 font-medium"
-              >
-                Subscribe
-              </button>
+              <Button type="submit">Subscribe</Button>
             </form>
           </div>
         </div>
@@ -157,50 +145,60 @@ const Footer = () => {
         {/* Social Media & Legal */}
         <div className="py-6 border-t border-gray-800">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-
             <div className="flex space-x-6">
-              <button
+              <a
+                href="https://facebook.com"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-gray-400 hover:text-white transition-colors duration-200"
                 aria-label="Facebook"
               >
                 <FaFacebookF className="h-5 w-5" />
-              </button>
-              <button
+              </a>
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-gray-400 hover:text-white transition-colors duration-200"
                 aria-label="Instagram"
               >
                 <FaInstagram className="h-5 w-5" />
-              </button>
-              <button
+              </a>
+              <a
+                href="https://twitter.com"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-gray-400 hover:text-white transition-colors duration-200"
                 aria-label="Twitter"
               >
                 <FaTwitter className="h-5 w-5" />
-              </button>
-              <button
+              </a>
+              <a
+                href="https://youtube.com"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-gray-400 hover:text-white transition-colors duration-200"
                 aria-label="YouTube"
               >
                 <FaYoutube className="h-5 w-5" />
-              </button>
+              </a>
             </div>
-            <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-6">
-              <div className="flex space-x-4 text-sm">
-                {footerLinks.legal.map((link) => (
-                  <Link
-                    key={link.name}
-                    to={link.href}
-                    className="text-gray-400 hover:text-white transition-colors duration-200"
-                  >
-                    {link.name}
-                  </Link>
-                ))}
-              </div>
+            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 md:justify-start text-sm">
+              {footerLinks.legal.map((link) => (
+                <Link
+                  key={link.name}
+                  to={link.href}
+                  className="text-gray-400 hover:text-white transition-colors duration-200"
+                >
+                  {link.name}
+                </Link>
+              ))}
             </div>
           </div>
-          <div className="mt-4 pt-4 border-t border-gray-800 text-center">
+          <div className="mt-6 pt-6 border-t border-gray-800 text-center">
             <p className="text-gray-400 text-sm">
-              © {currentYear} FitGear. All rights reserved. Built with passion for fitness enthusiasts.
+              © {currentYear} FitGear. All rights reserved. Built with passion for fitness
+              enthusiasts.
             </p>
           </div>
         </div>

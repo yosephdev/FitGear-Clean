@@ -6,12 +6,12 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
   const { isAuthenticated, user, isLoading } = useAuth();
   const location = useLocation();
 
-  console.log('ProtectedRoute: Auth state check', { 
-    isAuthenticated, 
-    isLoading, 
-    userId: user?.id, 
+  console.log('ProtectedRoute: Auth state check', {
+    isAuthenticated,
+    isLoading,
+    userId: user?.id,
     userEmail: user?.email,
-    path: location.pathname 
+    path: location.pathname,
   });
 
   if (isLoading) {

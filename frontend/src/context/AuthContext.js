@@ -67,9 +67,12 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = async () => {
       const token = localStorage.getItem('token');
       const user = localStorage.getItem('user');
-      
-      console.log('AuthContext: Checking authentication on startup', { token: !!token, user: !!user });
-      
+
+      console.log('AuthContext: Checking authentication on startup', {
+        token: !!token,
+        user: !!user,
+      });
+
       if (token && user) {
         try {
           console.log('AuthContext: Verifying token with backend...');

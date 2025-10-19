@@ -6,6 +6,7 @@ application. We try to import the real app from `api.main` (packaged layout) or
 `main`. If both fail, fall back to a minimal FastAPI app so the function still
 responds and prints useful diagnostics.
 """
+
 import traceback
 
 app = None

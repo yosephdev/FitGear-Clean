@@ -23,7 +23,7 @@ const wishlistReducer = (state, action) => {
         isLoading: false,
       };
     case 'ADD_ITEM':
-      if (!state.items.find(item => item.id === action.payload.id)) {
+      if (!state.items.find((item) => item.id === action.payload.id)) {
         const newItems = [...state.items, action.payload];
         return {
           ...state,
@@ -33,7 +33,7 @@ const wishlistReducer = (state, action) => {
       }
       return state;
     case 'REMOVE_ITEM':
-      const filteredItems = state.items.filter(item => item.id !== action.payload);
+      const filteredItems = state.items.filter((item) => item.id !== action.payload);
       return {
         ...state,
         items: filteredItems,
@@ -97,7 +97,7 @@ export const WishlistProvider = ({ children }) => {
   };
 
   const isInWishlist = (productId) => {
-    return state.items.some(item => item.id === productId);
+    return state.items.some((item) => item.id === productId);
   };
 
   const clearWishlist = () => {

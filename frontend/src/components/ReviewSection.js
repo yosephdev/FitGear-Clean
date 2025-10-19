@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import { StarIcon as StarIconOutline } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
+import { Button } from './ui/button.tsx';
 
 const ReviewSection = ({ productId }) => {
   const [reviews, setReviews] = useState([]);
@@ -42,12 +43,8 @@ const ReviewSection = ({ productId }) => {
 
     try {
       setIsSubmitting(true);
-      const response = await reviewsAPI.addReview(
-        productId,
-        newReview.rating,
-        newReview.comment
-      );
-      
+      const response = await reviewsAPI.addReview(productId, newReview.rating, newReview.comment);
+
       setReviews([response.data, ...reviews]);
       setNewReview({ rating: 5, comment: '' });
       setShowAddReview(false);
@@ -73,7 +70,7 @@ const ReviewSection = ({ productId }) => {
     return [...Array(5)].map((_, i) => {
       const isFilled = i < rating;
       const StarIcon = isFilled ? StarIconSolid : StarIconOutline;
-      
+
       return (
         <StarIcon
           key={i}
@@ -108,16 +105,9 @@ const ReviewSection = ({ productId }) => {
   return (
     <div className="mt-12">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-semibold text-gray-900">
-          Reviews ({reviews.length})
-        </h3>
+        <h3 className="text-xl font-semibold text-gray-900">Reviews ({reviews.length})</h3>
         {isAuthenticated && (
-          <button
-            onClick={() => setShowAddReview(!showAddReview)}
-            className="btn-primary"
-          >
-            Write a Review
-          </button>
+          <Button onClick={() => setShowAddReview(!showAddReview)}>Write a Review</Button>
         )}
       </div>
 
@@ -127,9 +117,7 @@ const ReviewSection = ({ productId }) => {
           <h4 className="text-lg font-medium text-gray-900 mb-4">Write Your Review</h4>
           <form onSubmit={handleSubmitReview}>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Rating
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
               <div className="flex space-x-1">
                 {renderStars(newReview.rating, true, (rating) =>
                   setNewReview({ ...newReview, rating })
@@ -138,9 +126,7 @@ const ReviewSection = ({ productId }) => {
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Your Review
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Your Review</label>
               <textarea
                 value={newReview.comment}
                 onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
@@ -152,20 +138,12 @@ const ReviewSection = ({ productId }) => {
             </div>
 
             <div className="flex space-x-3">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="btn-primary disabled:opacity-50"
-              >
+              <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? 'Submitting...' : 'Submit Review'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowAddReview(false)}
-                className="btn-outline"
-              >
+              </Button>
+              <Button type="button" onClick={() => setShowAddReview(false)} variant="outline">
                 Cancel
-              </button>
+              </Button>
             </div>
           </form>
         </div>
@@ -190,12 +168,8 @@ const ReviewSection = ({ productId }) => {
                   <div>
                     <p className="font-medium text-gray-900">{review.user_name}</p>
                     <div className="flex items-center space-x-2">
-                      <div className="flex space-x-1">
-                        {renderStars(review.rating)}
-                      </div>
-                      <span className="text-sm text-gray-500">
-                        {formatDate(review.created_at)}
-                      </span>
+                      <div className="flex space-x-1">{renderStars(review.rating)}</div>
+                      <span className="text-sm text-gray-500">{formatDate(review.created_at)}</span>
                     </div>
                   </div>
                 </div>

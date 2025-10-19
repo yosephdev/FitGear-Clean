@@ -1,24 +1,24 @@
-from fastapi import FastAPI, HTTPException, Depends, status, File, UploadFile, Form, Request
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+import logging
+import os
+import uuid
+from contextlib import asynccontextmanager
+from datetime import datetime, timedelta
+from typing import Optional
+
+import stripe
+from bson import ObjectId
+from dotenv import load_dotenv
+from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
-from motor.motor_asyncio import AsyncIOMotorClient
-from pydantic import BaseModel, EmailStr, validator
-from typing import Optional, List, Dict, Any
-from datetime import datetime, timedelta
-import os
-import json
-from dotenv import load_dotenv
-import secrets
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt
+from mangum import Mangum
+from motor.motor_asyncio import AsyncIOMotorClient
 from passlib.context import CryptContext
-import stripe
-from bson import ObjectId
-import uuid
-import logging
-from contextlib import asynccontextmanager
+from pydantic import BaseModel, EmailStr
 
 load_dotenv()
 
@@ -26,12 +26,12 @@ load_dotenv()
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 log_handlers = [logging.StreamHandler()]
-if ENVIRONMENT == 'development':
+if ENVIRONMENT == "development":
     log_handlers.append(logging.FileHandler("fitgear_api.log"))
 logging.basicConfig(
     level=LOG_LEVEL,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=log_handlers
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=log_handlers,
 )
 logger = logging.getLogger(__name__)
 
@@ -40,6 +40,7 @@ MONGO_URL = os.getenv("MONGO_URL")
 if not MONGO_URL:
     raise ValueError("MONGO_URL environment variable not set")
 
+
 # --- Lifespan Manager for DB Connection ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -47,7 +48,7 @@ async def lifespan(app: FastAPI):
     try:
         app.state.client = AsyncIOMotorClient(MONGO_URL, serverSelectionTimeoutMS=5000)
         app.state.db = app.state.client.fitgear
-        await app.state.client.admin.command('ping')
+        await app.state.client.admin.command("ping")
         logger.info("✅ Connected to MongoDB")
         await setup_database(app.state.db)
         logger.info("Application startup completed successfully")
@@ -55,19 +56,22 @@ async def lifespan(app: FastAPI):
         logger.error(f"Could not connect to MongoDB: {e}")
         app.state.client = None
         app.state.db = None
-    
+
     yield
-    
+
     if app.state.client:
         logger.info("Application shutdown...")
         app.state.client.close()
         logger.info("MongoDB connection closed.")
 
+
 async def setup_database(db: AsyncIOMotorClient):
     logger.info("Setting up database indexes and initial data...")
     # Create indexes
     await db.products.create_index([("category", 1), ("is_active", 1)])
-    await db.products.create_index([("name", "text"), ("description", "text"), ("brand", "text")])
+    await db.products.create_index(
+        [("name", "text"), ("description", "text"), ("brand", "text")]
+    )
     await db.users.create_index([("email", 1)], unique=True)
     logger.info("Database indexes created.")
 
@@ -75,14 +79,17 @@ async def setup_database(db: AsyncIOMotorClient):
     if await db.products.count_documents({}) == 0:
         logger.info("No products found, creating sample products...")
         from sample_data import sample_products
+
         await db.products.insert_many(sample_products)
         logger.info(f"{len(sample_products)} sample products created.")
-    
+
     if await db.blog_posts.count_documents({}) == 0:
         logger.info("No blog posts found, creating sample posts...")
         from sample_data import sample_posts
+
         await db.blog_posts.insert_many(sample_posts)
         logger.info(f"{len(sample_posts)} sample blog posts created.")
+
 
 # --- FastAPI App Initialization ---
 app = FastAPI(
@@ -91,7 +98,7 @@ app = FastAPI(
     description="Production-ready e-commerce API for FitGear",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # --- Middleware ---
@@ -99,14 +106,17 @@ app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
 # CORS Configuration
 allowed_origins = [
     "http://localhost:3000",
-    "http://127.0.0.1:3000", 
+    "http://localhost:3001",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
     "https://yosephdev.github.io",
     "https://fit-gear-frontend.vercel.app",
-    "https://fit-gear-one.vercel.app"
+    "https://fit-gear-one.vercel.app",
 ]
 
 if ENVIRONMENT == "development":
-    allowed_origins.append("*")
+    allowed_origins.append("http://localhost:3000")
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -116,28 +126,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # --- Global Exception Handlers ---
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     logger.error(f"Validation error on {request.url}: {exc.errors()}")
     return JSONResponse(
-        status_code=422,
-        content={"detail": "Validation error", "errors": exc.errors()}
+        status_code=422, content={"detail": "Validation error", "errors": exc.errors()}
     )
+
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled exception on {request.url}: {str(exc)}", exc_info=True)
-    if ENVIRONMENT == "development":
-        return JSONResponse(
-            status_code=500,
-            content={"detail": f"Internal server error: {str(exc)}"}
-        )
-    else:
-        return JSONResponse(
-            status_code=500,
-            content={"detail": "Internal server error"}
-        )
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+
 
 # --- Security & JWT ---
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -151,6 +154,7 @@ security = HTTPBearer()
 # --- Stripe Configuration ---
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
+
 # --- Pydantic Models ---
 # (Pydantic models remain the same as before)
 class UserCreate(BaseModel):
@@ -159,9 +163,11 @@ class UserCreate(BaseModel):
     first_name: str
     last_name: str
 
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
 
 class Product(BaseModel):
     id: Optional[str] = None
@@ -171,24 +177,29 @@ class Product(BaseModel):
     category: str
     # ... other fields
 
+
 # --- Dependency Injection for Database ---
 def get_db(request: Request) -> AsyncIOMotorClient:
     if request.app.state.db is None:
         raise HTTPException(status_code=503, detail="Database not connected")
     return request.app.state.db
 
+
 # --- Utility Functions ---
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
+
 def get_password_hash(password):
     return pwd_context.hash(password)
+
 
 def create_access_token(data: dict):
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
 
 async def get_user_by_id(db: AsyncIOMotorClient, user_id: str):
     user = await db.users.find_one({"_id": user_id})
@@ -199,31 +210,45 @@ async def get_user_by_id(db: AsyncIOMotorClient, user_id: str):
             return None
     return user
 
+
 async def get_current_user_id(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: AsyncIOMotorClient = Depends(get_db)
+    db: AsyncIOMotorClient = Depends(get_db),
 ):
     try:
-        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(
+            credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM]
+        )
         user_id: str = payload.get("sub")
         if user_id is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-        
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+            )
+
         user = await get_user_by_id(db, user_id)
         if user is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-        
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
+            )
+
         return str(user["_id"])
     except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired"
+        )
     except jwt.JWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+        )
+
 
 # --- API Routes ---
+
 
 @app.get("/")
 async def root():
     return {"message": "FitGear API is running!", "version": "1.0.0"}
+
 
 @app.get("/api/health")
 async def health_check(db: AsyncIOMotorClient = Depends(get_db)):
@@ -234,12 +259,33 @@ async def health_check(db: AsyncIOMotorClient = Depends(get_db)):
         logger.error(f"Health check failed: {e}")
         raise HTTPException(status_code=503, detail="Service unavailable")
 
+
+@app.post("/api/admin/reset-products")
+async def reset_products(db: AsyncIOMotorClient = Depends(get_db)):
+    """Temporary endpoint to reset products with updated images"""
+    try:
+        # Drop existing products
+        await db.products.drop()
+        logger.info("Products collection dropped")
+
+        # Insert new products
+        from sample_data import sample_products
+
+        await db.products.insert_many(sample_products)
+        logger.info(f"{len(sample_products)} products inserted")
+
+        return {"message": "Products reset successfully", "count": len(sample_products)}
+    except Exception as e:
+        logger.error(f"Error resetting products: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/auth/register")
 async def register(user: UserCreate, db: AsyncIOMotorClient = Depends(get_db)):
     existing_user = await db.users.find_one({"email": user.email})
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
-    
+
     hashed_password = get_password_hash(user.password)
     user_id = str(uuid.uuid4())
     user_data = {
@@ -250,25 +296,27 @@ async def register(user: UserCreate, db: AsyncIOMotorClient = Depends(get_db)):
         "last_name": user.last_name,
         "is_active": True,
         "is_admin": False,
-        "created_at": datetime.utcnow()
+        "created_at": datetime.utcnow(),
     }
     await db.users.insert_one(user_data)
     access_token = create_access_token(data={"sub": user_id})
     return {"access_token": access_token, "token_type": "bearer"}
+
 
 @app.post("/api/auth/login")
 async def login(form_data: UserLogin, db: AsyncIOMotorClient = Depends(get_db)):
     user = await db.users.find_one({"email": form_data.email})
     if not user or not verify_password(form_data.password, user["password"]):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
-    
+
     access_token = create_access_token(data={"sub": str(user["_id"])})
     return {"access_token": access_token, "token_type": "bearer"}
+
 
 @app.get("/api/auth/me")
 async def get_current_user_profile(
     user_id: str = Depends(get_current_user_id),
-    db: AsyncIOMotorClient = Depends(get_db)
+    db: AsyncIOMotorClient = Depends(get_db),
 ):
     user = await get_user_by_id(db, user_id)
     return {
@@ -276,37 +324,45 @@ async def get_current_user_profile(
         "email": user["email"],
         "first_name": user["first_name"],
         "last_name": user["last_name"],
-        "is_admin": user.get("is_admin", False)
+        "is_admin": user.get("is_admin", False),
     }
+
 
 @app.get("/api/products")
 async def get_products(
     db: AsyncIOMotorClient = Depends(get_db),
     category: Optional[str] = None,
     search: Optional[str] = None,
-    limit: int = 50
+    limit: int = 50,
 ):
     query = {"is_active": True}
     if category:
         query["category"] = category
     if search:
         query["$text"] = {"$search": search}
-    
+
     products = await db.products.find(query).limit(limit).to_list(length=limit)
     for p in products:
         p["id"] = str(p["_id"])
         p["_id"] = str(p["_id"])
         if "created_at" in p:
-            p["created_at"] = p["created_at"].isoformat() if hasattr(p["created_at"], 'isoformat') else str(p["created_at"])
-    
+            p["created_at"] = (
+                p["created_at"].isoformat()
+                if hasattr(p["created_at"], "isoformat")
+                else str(p["created_at"])
+            )
+
     return {"products": products}
+
 
 @app.get("/api/products/{product_id}")
 async def get_product(product_id: str, db: AsyncIOMotorClient = Depends(get_db)):
     product = await db.products.find_one({"_id": product_id, "is_active": True})
     if not product:
         try:
-            product = await db.products.find_one({"_id": ObjectId(product_id), "is_active": True})
+            product = await db.products.find_one(
+                {"_id": ObjectId(product_id), "is_active": True}
+            )
         except Exception:
             pass
     if not product:
@@ -314,13 +370,19 @@ async def get_product(product_id: str, db: AsyncIOMotorClient = Depends(get_db))
     product["id"] = str(product["_id"])
     product["_id"] = str(product["_id"])
     if "created_at" in product:
-        product["created_at"] = product["created_at"].isoformat() if hasattr(product["created_at"], 'isoformat') else str(product["created_at"])
+        product["created_at"] = (
+            product["created_at"].isoformat()
+            if hasattr(product["created_at"], "isoformat")
+            else str(product["created_at"])
+        )
     return product
+
 
 @app.get("/api/categories")
 async def get_categories(db: AsyncIOMotorClient = Depends(get_db)):
     categories = await db.products.distinct("category", {"is_active": True})
     return {"categories": sorted(categories)}
+
 
 @app.get("/api/blog")
 async def get_blog_posts(db: AsyncIOMotorClient = Depends(get_db)):
@@ -329,9 +391,14 @@ async def get_blog_posts(db: AsyncIOMotorClient = Depends(get_db)):
         p["id"] = str(p["_id"])
         p["_id"] = str(p["_id"])
         if "created_at" in p:
-            p["created_at"] = p["created_at"].isoformat() if hasattr(p["created_at"], 'isoformat') else str(p["created_at"])
-    
+            p["created_at"] = (
+                p["created_at"].isoformat()
+                if hasattr(p["created_at"], "isoformat")
+                else str(p["created_at"])
+            )
+
     return {"posts": posts}
+
 
 @app.get("/api/blog/{post_id}")
 async def get_blog_post(post_id: str, db: AsyncIOMotorClient = Depends(get_db)):
@@ -346,15 +413,61 @@ async def get_blog_post(post_id: str, db: AsyncIOMotorClient = Depends(get_db)):
     post["id"] = str(post["_id"])
     post["_id"] = str(post["_id"])
     if "created_at" in post:
-        post["created_at"] = post["created_at"].isoformat() if hasattr(post["created_at"], 'isoformat') else str(post["created_at"])
+        post["created_at"] = (
+            post["created_at"].isoformat()
+            if hasattr(post["created_at"], "isoformat")
+            else str(post["created_at"])
+        )
     return post
 
+
+@app.post("/api/payment/create-intent")
+async def create_payment_intent(request: Request):
+    try:
+        data = await request.json()
+        amount = data.get("amount")
+
+        if not amount or amount <= 0:
+            raise HTTPException(status_code=400, detail="Invalid amount")
+
+        intent = stripe.PaymentIntent.create(
+            amount=int(amount * 100),  # Convert to cents
+            currency="usd",
+            automatic_payment_methods={"enabled": True},
+        )
+        return {"client_secret": intent.client_secret}
+    except Exception as e:
+        logger.error(f"Error creating payment intent: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/payment/confirm")
+async def confirm_payment(request: Request, db: AsyncIOMotorClient = Depends(get_db)):
+    try:
+        data = await request.form()
+        payment_intent_id = data.get("payment_intent_id")
+        shipping_address = data.get("shipping_address")
+
+        if not payment_intent_id or not shipping_address:
+            raise HTTPException(status_code=400, detail="Missing payment intent or shipping address")
+
+        # You would typically create an order in your database here
+        # For now, we'll just log the information
+        logger.info(f"Payment confirmed for intent: {payment_intent_id}")
+        logger.info(f"Shipping address: {shipping_address}")
+
+        return {"success": True}
+    except Exception as e:
+        logger.error(f"Error confirming payment: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # --- Vercel Handler ---
-from mangum import Mangum
 handler = Mangum(app)
 
 if __name__ == "__main__":
     import uvicorn
+
     PORT = int(os.getenv("PORT", 8001))
     HOST = os.getenv("HOST", "0.0.0.0")
     uvicorn.run(app, host=HOST, port=PORT)

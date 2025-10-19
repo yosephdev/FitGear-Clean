@@ -1,10 +1,12 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:8001/api');
+const API_BASE_URL =
+  process.env.REACT_APP_API_URL ||
+  (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:8001');
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: `${API_BASE_URL}/api`,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -45,7 +47,7 @@ api.interceptors.response.use(
       window.location.href = '/login';
       return Promise.reject(new Error('Please log in again.'));
     }
-    
+
     // Convert error to a string message
     const errorMessage = extractErrorMessage(error);
     return Promise.reject(new Error(errorMessage));
@@ -67,7 +69,9 @@ export const productsAPI = {
   updateProduct: (id, productData) => api.put(`/products/${id}`, productData),
   deleteProduct: (id) => api.delete(`/products/${id}`),
   getCategories: () => api.get('/categories'),
-};  // Cart API
+};
+
+// Cart API
 export const cartAPI = {
   getCart: () => api.get('/cart'),
   addToCart: (productId, quantity) => {
@@ -120,31 +124,24 @@ export const ordersAPI = {
 export const paymentAPI = {
   createPaymentIntent: async (amount) => {
     try {
-      const formData = new FormData();
-      formData.append('amount', amount);
-      
-      const response = await api.post('/payment/create-intent', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        }
-      });
-      
+      const response = await api.post('/payment/create-intent', { amount });
+
       if (!response?.data?.client_secret) {
         throw new Error('Unable to initialize payment. Please try again.');
       }
-      
+
       return response;
     } catch (error) {
       const errorMsg = extractErrorMessage(error);
       throw new Error(errorMsg);
     }
   },
-  
+
   confirmPayment: async (paymentIntentId, shippingInfo) => {
     try {
       const formData = new FormData();
       formData.append('payment_intent_id', paymentIntentId);
-      
+
       const shippingAddress = {
         name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
         email: shippingInfo.email,
@@ -154,15 +151,15 @@ export const paymentAPI = {
         postal_code: shippingInfo.zipCode,
         country: shippingInfo.country,
       };
-      
+
       formData.append('shipping_address', JSON.stringify(shippingAddress));
-      
+
       const response = await api.post('/payment/confirm', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
-        }
+        },
       });
-      
+
       return response;
     } catch (error) {
       const errorMsg = extractErrorMessage(error);

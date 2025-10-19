@@ -9,6 +9,7 @@ import {
   PencilIcon,
   TrashIcon,
 } from '@heroicons/react/24/outline';
+import { Button } from '../components/ui/button.tsx';
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -143,12 +144,12 @@ const Admin = () => {
                 <div className="bg-white rounded-lg shadow-md">
                   <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                     <h3 className="text-lg font-semibold text-gray-900">Products</h3>
-                    <button className="btn-primary flex items-center">
+                    <Button>
                       <PlusIcon className="h-4 w-4 mr-2" />
                       Add Product
-                    </button>
+                    </Button>
                   </div>
-                  
+
                   <div className="overflow-x-auto">
                     <table className="data-table">
                       <thead>
@@ -181,22 +182,24 @@ const Admin = () => {
                             <td>${product.price}</td>
                             <td>{product.inventory}</td>
                             <td>
-                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                product.is_active 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-red-100 text-red-800'
-                              }`}>
+                              <span
+                                className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                  product.is_active
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-red-100 text-red-800'
+                                }`}
+                              >
                                 {product.is_active ? 'Active' : 'Inactive'}
                               </span>
                             </td>
                             <td>
                               <div className="flex space-x-2">
-                                <button className="text-blue-600 hover:text-blue-800">
+                                <Button variant="ghost" size="icon">
                                   <PencilIcon className="h-4 w-4" />
-                                </button>
-                                <button className="text-red-600 hover:text-red-800">
+                                </Button>
+                                <Button variant="ghost" size="icon">
                                   <TrashIcon className="h-4 w-4" />
-                                </button>
+                                </Button>
                               </div>
                             </td>
                           </tr>
@@ -228,12 +231,12 @@ const Admin = () => {
                 <div className="bg-white rounded-lg shadow-md">
                   <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                     <h3 className="text-lg font-semibold text-gray-900">Blog Posts</h3>
-                    <button className="btn-primary flex items-center">
+                    <Button>
                       <PlusIcon className="h-4 w-4 mr-2" />
                       New Post
-                    </button>
+                    </Button>
                   </div>
-                  
+
                   <div className="overflow-x-auto">
                     <table className="data-table">
                       <thead>
@@ -256,22 +259,24 @@ const Admin = () => {
                             <td>{post.author}</td>
                             <td>{new Date(post.created_at).toLocaleDateString()}</td>
                             <td>
-                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                post.is_published 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-yellow-100 text-yellow-800'
-                              }`}>
+                              <span
+                                className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                  post.is_published
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-yellow-100 text-yellow-800'
+                                }`}
+                              >
                                 {post.is_published ? 'Published' : 'Draft'}
                               </span>
                             </td>
                             <td>
                               <div className="flex space-x-2">
-                                <button className="text-blue-600 hover:text-blue-800">
+                                <Button variant="ghost" size="icon">
                                   <PencilIcon className="h-4 w-4" />
-                                </button>
-                                <button className="text-red-600 hover:text-red-800">
+                                </Button>
+                                <Button variant="ghost" size="icon">
                                   <TrashIcon className="h-4 w-4" />
-                                </button>
+                                </Button>
                               </div>
                             </td>
                           </tr>

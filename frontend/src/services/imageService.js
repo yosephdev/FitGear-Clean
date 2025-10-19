@@ -1,18 +1,16 @@
 // src/services/imageService.js
 
-// Import all the local images
-import mensWorkoutTank from '../assets/images/mens-workout-tank.jpg';
-import pelotonBike from '../assets/images/peloton-style-bike.jpg';
-import smartTreadmill from '../assets/images/smart-treadmill.jpg';
-import yogaPant from '../assets/images/yoga-pant.jpg';
-
-const images = {
-  '/frontend/src/assets/images/mens-workout-tank.jpg': mensWorkoutTank,
-  '/frontend/src/assets/images/peloton-style-bike.jpg': pelotonBike,
-  '/frontend/src/assets/images/smart-treadmill.jpg': smartTreadmill,
-  '/frontend/src/assets/images/yoga-pant.jpg': yogaPant,
-};
-
+/**
+ * Get the correct URL for a product image
+ * @param {string} imagePath - The image path from the API
+ * @returns {string} - The correct URL for the image
+ */
+/**
+ * For public folder images, just return the path as-is.
+ * If the path does not start with '/', add it.
+ */
 export const getProductImage = (imagePath) => {
-  return images[imagePath];
+  if (!imagePath) return '';
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
+  return imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
 };

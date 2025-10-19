@@ -1,4 +1,4 @@
-module.exports = (req, res) => {
+export default (req, res) => {
   res.status(200).json({
     message: 'API root is working!',
     status: 'ok',

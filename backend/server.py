@@ -104,19 +104,12 @@ app = FastAPI(
 # --- Middleware ---
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
 # CORS Configuration
-allowed_origins = [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:3001",
-    "https://yosephdev.github.io",
-    "https://fit-gear-frontend.vercel.app",
-    "https://fit-gear-one.vercel.app",
-]
+allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "")
+allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",") if origin.strip()]
 
-if ENVIRONMENT == "development":
+# Add default local origins if in development
+if ENVIRONMENT == "development" and "http://localhost:3000" not in allowed_origins:
     allowed_origins.append("http://localhost:3000")
-
 
 app.add_middleware(
     CORSMiddleware,

@@ -1,1 +1,6 @@
-export const API_BASE_URL = 'https://fit-gear-one.vercel.app/api';
+import { type ClassValue, clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}

@@ -49,6 +49,8 @@ const fallbackProducts: Product[] = [
 
 // Generate static params using ONLY static data
 export async function generateStaticParams() {
+  // This function MUST NOT perform any data fetching.
+  // It provides the slugs for the pages that will be generated at build time.
   return fallbackProducts.map((product) => ({
     slug: product.slug,
   }));

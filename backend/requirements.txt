@@ -1,10 +1,3 @@
-fastapi
-uvicorn
-pydantic
-python-dotenv
-pymongo
-passlib
-python-jose
-bcrypt
-email_validator
-gunicorn
+fastapi==0.104.1
+uvicorn==0.24.0
+python-multipart==0.0.6

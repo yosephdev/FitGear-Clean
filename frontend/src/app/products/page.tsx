@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect, Suspense, useCallback } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { Search, SlidersHorizontal, Grid3x3, List, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -43,12 +44,7 @@ function ProductsContent() {
     sortBy: searchParams.get("sortBy") || "name",
   })
 
-  useEffect(() => {
-    fetchProducts()
-    fetchCategories()
-  }, [filters])
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setIsLoading(true)
     try {
       const response = await fetch(`${process.env['NEXT_PUBLIC_API_BASE_URL']}/products`)
@@ -90,9 +86,9 @@ function ProductsContent() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [filters])
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await fetch(`${process.env['NEXT_PUBLIC_API_BASE_URL']}/categories`)
       const data = await response.json()
@@ -100,7 +96,12 @@ function ProductsContent() {
     } catch (error) {
       console.error("Error fetching categories:", error)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchProducts()
+    fetchCategories()
+  }, [fetchProducts, fetchCategories])
 
   const updateFilters = (key: string, value: string) => {
     const newFilters = { ...filters, [key]: value }
@@ -142,11 +143,12 @@ function ProductsContent() {
     <Card className="group overflow-hidden border-border hover:border-primary transition-all duration-300">
       <Link href={`/products/${product.id}`}>
         <div className="relative aspect-square overflow-hidden bg-muted" style={{ minHeight: '300px' }}>
-          <img
+          <Image
             src={product.images[0] || "/placeholder.svg"}
             alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            style={{ display: 'block' }}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
           {product.inventory <= 0 && <Badge className="absolute top-3 right-3 bg-destructive">Out of Stock</Badge>}
         </div>
@@ -186,7 +188,13 @@ function ProductsContent() {
     <Card className="group overflow-hidden border-border hover:border-primary transition-all duration-300">
       <div className="flex flex-col sm:flex-row">
         <Link href={`/products/${product.id}`} className="relative w-full sm:w-48 aspect-square sm:aspect-auto" style={{ minHeight: '200px' }}>
-          <img src={product.images[0] || "/placeholder.svg"} alt={product.name} className="w-full h-full object-cover" style={{ display: 'block' }} />
+          <Image 
+            src={product.images[0] || "/placeholder.svg"} 
+            alt={product.name} 
+            fill
+            sizes="(max-width: 768px) 100vw, 192px"
+            className="object-cover" 
+          />
         </Link>
         <div className="flex-1 p-6">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">

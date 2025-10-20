@@ -1,12 +1,17 @@
 export interface Product {
-  product_id: string;
+  id: string;
+  _id?: string;
   name: string;
   price: number;
   description: string;
   images?: string[];
   category?: string;
-  slug: string;
-  stock?: number;
+  brand?: string;
+  inventory: number;
+  rating?: number;
+  reviews_count?: number;
+  specifications?: Record<string, unknown>;
+  is_active?: boolean;
   featured?: boolean;
   created_at?: string;
   updated_at?: string;
@@ -20,7 +25,7 @@ export interface ProductResponse {
 }
 
 export interface CartItem {
-  product_id: string;
+  id: string;
   quantity: number;
   product?: Product;
 }

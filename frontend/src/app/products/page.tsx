@@ -3,7 +3,6 @@
 import { useState, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import Image from "next/image"
 import { Search, SlidersHorizontal, Grid3x3, List, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +10,8 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useCart } from "@/context/CartContext"
+import { toast } from "sonner"
 
 interface Product {
   id: string
@@ -20,12 +21,13 @@ interface Product {
   images: string[]
   rating: number
   reviews_count: number
-  inStock: boolean
+  inventory: number
 }
 
 function ProductsContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { addToCart } = useCart()
 
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<string[]>([])
@@ -49,11 +51,9 @@ function ProductsContent() {
   const fetchProducts = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/products`)
+      const response = await fetch(`${process.env['NEXT_PUBLIC_API_BASE_URL']}/products`)
       const data = await response.json()
-      let fetchedProducts = data.products || []
-
-      // Apply filters
+      let fetchedProducts = data.products || []      // Apply filters
       if (filters.category && filters.category !== "all") {
         fetchedProducts = fetchedProducts.filter((p: Product) => p.category === filters.category)
       }
@@ -94,7 +94,7 @@ function ProductsContent() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/categories`)
+      const response = await fetch(`${process.env['NEXT_PUBLIC_API_BASE_URL']}/categories`)
       const data = await response.json()
       setCategories(data.categories || [])
     } catch (error) {
@@ -125,17 +125,30 @@ function ProductsContent() {
     router.push("/products", { scroll: false })
   }
 
+  const handleAddToCart = (product: Product) => {
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      ...(product.images[0] && { image: product.images[0] })
+    });
+    toast.success(`${product.name} added to cart!`, {
+      description: `Price: $${product.price.toFixed(2)}`,
+      duration: 3000,
+    });
+  };
+
   const ProductCard = ({ product }: { product: Product }) => (
     <Card className="group overflow-hidden border-border hover:border-primary transition-all duration-300">
       <Link href={`/products/${product.id}`}>
-        <div className="relative aspect-square overflow-hidden bg-muted">
-          <Image
+        <div className="relative aspect-square overflow-hidden bg-muted" style={{ minHeight: '300px' }}>
+          <img
             src={product.images[0] || "/placeholder.svg"}
             alt={product.name}
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            style={{ display: 'block' }}
           />
-          {!product.inStock && <Badge className="absolute top-3 right-3 bg-destructive">Out of Stock</Badge>}
+          {product.inventory <= 0 && <Badge className="absolute top-3 right-3 bg-destructive">Out of Stock</Badge>}
         </div>
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-2 mb-2">
@@ -155,8 +168,15 @@ function ProductsContent() {
         </CardContent>
       </Link>
       <CardFooter className="p-4 pt-0">
-        <Button className="w-full" disabled={!product.inStock}>
-          {product.inStock ? "Add to Cart" : "Out of Stock"}
+        <Button
+          className="w-full"
+          disabled={product.inventory <= 0}
+          onClick={(e) => {
+            e.preventDefault();
+            handleAddToCart(product);
+          }}
+        >
+          {product.inventory > 0 ? "Add to Cart" : "Out of Stock"}
         </Button>
       </CardFooter>
     </Card>
@@ -165,8 +185,8 @@ function ProductsContent() {
   const ProductListItem = ({ product }: { product: Product }) => (
     <Card className="group overflow-hidden border-border hover:border-primary transition-all duration-300">
       <div className="flex flex-col sm:flex-row">
-        <Link href={`/products/${product.id}`} className="relative w-full sm:w-48 aspect-square sm:aspect-auto">
-          <Image src={product.images[0] || "/placeholder.svg"} alt={product.name} fill className="object-cover" />
+        <Link href={`/products/${product.id}`} className="relative w-full sm:w-48 aspect-square sm:aspect-auto" style={{ minHeight: '200px' }}>
+          <img src={product.images[0] || "/placeholder.svg"} alt={product.name} className="w-full h-full object-cover" style={{ display: 'block' }} />
         </Link>
         <div className="flex-1 p-6">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -178,7 +198,7 @@ function ProductsContent() {
               </Link>
               <div className="flex items-center gap-2 mb-3">
                 <Badge variant="secondary">{product.category}</Badge>
-                {!product.inStock && <Badge className="bg-destructive">Out of Stock</Badge>}
+                {product.inventory <= 0 && <Badge className="bg-destructive">Out of Stock</Badge>}
               </div>
               <div className="flex items-center gap-1 mb-4">
                 <Star className="h-4 w-4 fill-primary text-primary" />
@@ -188,8 +208,15 @@ function ProductsContent() {
             </div>
             <div className="flex flex-col items-start sm:items-end gap-3">
               <span className="text-3xl font-bold text-foreground">${product.price}</span>
-              <Button disabled={!product.inStock} className="w-full sm:w-auto">
-                {product.inStock ? "Add to Cart" : "Out of Stock"}
+              <Button
+                disabled={product.inventory <= 0}
+                className="w-full sm:w-auto"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleAddToCart(product);
+                }}
+              >
+                {product.inventory > 0 ? "Add to Cart" : "Out of Stock"}
               </Button>
             </div>
           </div>

@@ -8,13 +8,16 @@ type CartItem = {
   name: string;
   price: number;
   quantity: number;
+  image?: string;
 };
 
 // Define the shape of the context
 type CartContextType = {
   cartItems: CartItem[];
   addToCart: (item: Omit<CartItem, 'quantity'>) => void;
-  // Add other functions like removeFromCart, updateQuantity etc.
+  removeFromCart: (id: string) => void;
+  updateQuantity: (id: string, quantity: number) => void;
+  clearCart: () => void;
 };
 
 // Create the context with a default value
@@ -38,8 +41,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const removeFromCart = (id: string) => {
+    setCartItems(prevItems => prevItems.filter(item => item.id !== id));
+  };
+
+  const updateQuantity = (id: string, quantity: number) => {
+    if (quantity <= 0) {
+      removeFromCart(id);
+      return;
+    }
+    setCartItems(prevItems =>
+      prevItems.map(item =>
+        item.id === id ? { ...item, quantity } : item
+      )
+    );
+  };
+
+  const clearCart = () => {
+    setCartItems([]);
+  };
+
   return (
-    <CartContext.Provider value={{ cartItems, addToCart }}>
+    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, clearCart }}>
       {children}
     </CartContext.Provider>
   );

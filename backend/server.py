@@ -3,7 +3,7 @@ import os
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, List, Any
 
 import stripe
 from bson import ObjectId
@@ -18,9 +18,41 @@ from jose import jwt
 from mangum import Mangum
 from motor.motor_asyncio import AsyncIOMotorClient
 from passlib.context import CryptContext
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 load_dotenv()
+
+# --- Order Models ---
+class OrderItem(BaseModel):
+    id: str
+    name: str = ""
+    price: float = 0.0
+    quantity: int
+    image: str = ""
+
+class ShippingInfo(BaseModel):
+    firstName: str
+    lastName: str
+    email: str
+    address: str
+    city: str
+    state: str
+    zip: str
+
+class PaymentInfo(BaseModel):
+    cardNumber: str
+    expiry: str
+    cvv: str
+
+class OrderCreate(BaseModel):
+    items: List[OrderItem]
+    shipping: ShippingInfo
+    payment: PaymentInfo
+    total: float
+
+class OrderResponse(BaseModel):
+    id: str
+    created_at: str
 
 # --- Logging Configuration ---
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
@@ -246,7 +278,7 @@ async def root():
 
 
 @app.get("/api/health")
-async def health_check(db: AsyncIOMotorClient = Depends(get_db)):
+async def health_check(db: Any = Depends(get_db)):
     try:
         await db.command("ping")
         return {"status": "healthy", "database": "connected"}
@@ -254,25 +286,61 @@ async def health_check(db: AsyncIOMotorClient = Depends(get_db)):
         logger.error(f"Health check failed: {e}")
         raise HTTPException(status_code=503, detail="Service unavailable")
 
+@app.get("/")
+async def root():
+    return {"message": "FitGear API is running!", "version": "1.0.0"}
 
-@app.post("/api/admin/reset-products")
-async def reset_products(db: AsyncIOMotorClient = Depends(get_db)):
-    """Temporary endpoint to reset products with updated images"""
-    try:
-        # Drop existing products
-        await db.products.drop()
-        logger.info("Products collection dropped")
+# --- Order Creation Endpoint ---
+@app.post("/api/orders", response_model=OrderResponse)
+async def create_order(order: OrderCreate, db: Any = Depends(get_db)):
+    order_id = str(uuid.uuid4())
+    order_doc = {
+        "_id": order_id,
+        "items": [item.dict() for item in order.items],
+        "shipping": order.shipping.dict(),
+        "payment": order.payment.dict(),
+        "total": order.total,
+        "created_at": datetime.utcnow().isoformat(),
+        "status": "confirmed",
+    }
+    await db.orders.insert_one(order_doc)
+    return {"id": order_id, "created_at": order_doc["created_at"]}
 
-        # Insert new products
-        from sample_data import sample_products
 
-        await db.products.insert_many(sample_products)
-        logger.info(f"{len(sample_products)} products inserted")
-
-        return {"message": "Products reset successfully", "count": len(sample_products)}
-    except Exception as e:
-        logger.error(f"Error resetting products: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+# --- Get Order Details Endpoint ---
+@app.get("/api/orders/{order_id}")
+async def get_order(order_id: str, db: Any = Depends(get_db)):
+    order = await db.orders.find_one({"_id": order_id})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    # Calculate estimated delivery (5 days from order date)
+    created_at = datetime.fromisoformat(order["created_at"]) if isinstance(order["created_at"], str) else order["created_at"]
+    estimated_delivery = created_at + timedelta(days=5)
+    
+    # Format the response to match frontend expectations
+    return {
+        "id": str(order["_id"]),
+        "date": order["created_at"],
+        "status": order.get("status", "confirmed"),
+        "estimatedDelivery": estimated_delivery.isoformat(),
+        "items": order["items"],
+        "shipping": {
+            "name": f"{order['shipping']['firstName']} {order['shipping']['lastName']}",
+            "address": order["shipping"]["address"],
+            "city": order["shipping"]["city"],
+            "state": order["shipping"]["state"],
+            "zip": order["shipping"]["zip"],
+            "email": order["shipping"]["email"],
+            "phone": order["shipping"].get("phone", "N/A")
+        },
+        "payment": {
+            "method": "Visa",
+            "last4": order["payment"]["cardNumber"][-4:] if len(order["payment"]["cardNumber"]) >= 4 else "****",
+            "total": order["total"]
+        },
+        "tax": order["total"] * 0.08
+    }
 
 
 @app.post("/api/auth/register")

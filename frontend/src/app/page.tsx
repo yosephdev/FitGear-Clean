@@ -23,6 +23,8 @@ interface Product {
   category: string
   images: string[]
   rating: number
+  inventory?: number
+  reviews_count?: number
 }
 
 export default function Home() {
@@ -31,7 +33,7 @@ export default function Home() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/products?limit=4`)
+        const response = await fetch(`${process.env['NEXT_PUBLIC_API_BASE_URL']}/products?limit=4`)
         const data = await response.json()
         setProducts(data.products || [])
       } catch (error) {
@@ -98,17 +100,30 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-background via-muted/30 to-background">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(0,0,0,0.05),transparent_50%)]" />
+      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+        {/* Video Background */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+        >
+          <source src="/FitGear_Website_Hero_Section_Video.mp4" type="video/mp4" />
+        </video>
+        
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-black/50" />
+        
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             <Badge variant="secondary" className="mb-6 text-sm px-4 py-1.5">
               Premium Fitness Equipment
             </Badge>
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 text-balance leading-tight tracking-tight">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 text-balance leading-tight tracking-tight text-white">
               Transform Your Fitness Journey
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground mb-10 text-pretty max-w-2xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl text-white/90 mb-10 text-pretty max-w-2xl mx-auto leading-relaxed">
               Discover premium sports equipment and accessories designed to help you reach your fitness goals faster.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -118,7 +133,7 @@ export default function Home() {
                   <ArrowRightIcon className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8 h-12 bg-transparent" asChild>
+              <Button size="lg" variant="outline" className="text-lg px-8 h-12 bg-white/10 text-white border-white/30 hover:bg-white/20" asChild>
                 <Link href="/blog">Learn More</Link>
               </Button>
             </div>
@@ -132,7 +147,7 @@ export default function Home() {
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4 text-balance">Why Choose FitGear?</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto text-pretty leading-relaxed">
-              We're committed to providing the best fitness equipment and exceptional service to help you succeed.
+              We&apos;re committed to providing the best fitness equipment and exceptional service to help you succeed.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -163,11 +178,12 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {products.map((product) => (
               <Card key={product.id} className="group overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                <div className="aspect-square overflow-hidden bg-muted">
+                <div className="aspect-square overflow-hidden bg-muted" style={{ minHeight: '300px' }}>
                   <img
                     src={product.images[0] || "/placeholder.svg"}
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    style={{ display: 'block' }}
                   />
                 </div>
                 <CardContent className="p-5">
@@ -176,9 +192,12 @@ export default function Home() {
                       {product.category}
                     </Badge>
                     <div className="flex items-center gap-1 ml-auto">
-                      {[...Array(product.rating)].map((_, i) => (
+                      {[...Array(Math.floor(product.rating || 0))].map((_, i) => (
                         <StarIcon key={i} className="w-3.5 h-3.5 fill-secondary text-secondary" />
                       ))}
+                      <span className="text-xs text-muted-foreground ml-1">
+                        {product.rating?.toFixed(1) || "0.0"}
+                      </span>
                     </div>
                   </div>
                   <h3 className="font-semibold mb-2 text-balance">{product.name}</h3>
@@ -226,7 +245,7 @@ export default function Home() {
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4 text-balance">What Our Customers Say</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto text-pretty leading-relaxed">
-              Don't just take our word for it. Here's what our customers have to say about their experience.
+              Don&apos;t just take our word for it. Here&apos;s what our customers have to say about their experience.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -234,11 +253,11 @@ export default function Home() {
               <Card key={index} className="border-2">
                 <CardContent className="pt-8">
                   <div className="flex items-center gap-1 mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
+                    {[...Array(Math.floor(testimonial.rating || 5))].map((_, i) => (
                       <StarIcon key={i} className="w-5 h-5 fill-secondary text-secondary" />
                     ))}
                   </div>
-                  <p className="text-muted-foreground mb-6 leading-relaxed">"{testimonial.content}"</p>
+                  <p className="text-muted-foreground mb-6 leading-relaxed">&ldquo;{testimonial.content}&rdquo;</p>
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center">
                       <span className="text-secondary-foreground font-semibold text-lg">

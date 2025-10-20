@@ -184,9 +184,12 @@ const Header = () => {
                 >
                   Login
                 </Link>
-                <Button asChild>
-                  <Link href="/register">Sign Up</Link>
-                </Button>
+                <Link
+                  href="/register"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                >
+                  Sign Up
+                </Link>
               </div>
             )}
 

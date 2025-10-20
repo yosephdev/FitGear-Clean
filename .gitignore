@@ -65,3 +65,6 @@ docs/
 .vercel
 .vercel/**
 .env*.local
+
+clear-cache.sh
+start-dev.sh

@@ -58,8 +58,9 @@ class OrderResponse(BaseModel):
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 log_handlers = [logging.StreamHandler()]
-if ENVIRONMENT == "development":
-    log_handlers.append(logging.FileHandler("fitgear_api.log"))
+# Remove FileHandler for Vercel read-only file system compatibility
+# if ENVIRONMENT == "development":
+#     log_handlers.append(logging.FileHandler("fitgear_api.log"))
 logging.basicConfig(
     level=LOG_LEVEL,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",

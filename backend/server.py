@@ -150,6 +150,11 @@ allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",") i
 if ENVIRONMENT == "development" and "http://localhost:3000" not in allowed_origins:
     allowed_origins.append("http://localhost:3000")
 
+# If no origins configured, allow all (temporary for Railway setup)
+if not allowed_origins:
+    allowed_origins = ["*"]
+    logger.warning("No ALLOWED_ORIGINS configured, allowing all origins. Set ALLOWED_ORIGINS env var in production!")
+
 logger.info(f"Configured ALLOWED_ORIGINS: {allowed_origins}")
 
 app.add_middleware(

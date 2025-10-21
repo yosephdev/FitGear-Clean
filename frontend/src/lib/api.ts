@@ -1,5 +1,5 @@
 export function apiBaseUrl() {
-  // Prefer explicit env var; otherwise fall back to same-origin /api
+  // In Next.js client components, env vars are embedded at build time
   const env = process.env['NEXT_PUBLIC_API_BASE_URL'];
   if (env && env.trim().length > 0) return env.replace(/\/$/, "");
   return "/api";

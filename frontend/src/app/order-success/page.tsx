@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -39,7 +39,10 @@ const formatDate = (dateString: string) => {
   });
 };
 
-export default function OrderSuccessPage() {
+// Force this route to be dynamic to avoid prerendering issues
+export const dynamic = 'force-dynamic';
+
+function OrderSuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
   type OrderItem = {
@@ -399,5 +402,19 @@ export default function OrderSuccessPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function OrderSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center text-lg text-muted-foreground">Loading order details...</div>
+        </div>
+      }
+    >
+      <OrderSuccessContent />
+    </Suspense>
   );
 }

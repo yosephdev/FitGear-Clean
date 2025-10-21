@@ -124,7 +124,6 @@ async def setup_database(db: AsyncIOMotorClient):
         logger.info(f"{len(sample_posts)} sample blog posts created.")
 
 
-# --- FastAPI App Initialization ---
 app = FastAPI(
     title="FitGear API",
     version="1.0.0",
@@ -133,6 +132,13 @@ app = FastAPI(
     redoc_url="/api/redoc",
     lifespan=lifespan,
 )
+
+# For Vercel: Mangum ASGI handler
+try:
+    from mangum import Mangum
+    handler = Mangum(app)
+except ImportError:
+    handler = app
 
 # --- Middleware ---
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])

@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton"
 import { useCart } from "@/context/CartContext"
 import { toast } from "sonner"
+import { apiUrl } from "@/lib/api"
 
 interface Product {
   id: string
@@ -47,7 +48,7 @@ function ProductsContent() {
   const fetchProducts = useCallback(async () => {
     setIsLoading(true)
     try {
-      const response = await fetch(`${process.env['NEXT_PUBLIC_API_BASE_URL']}/products`)
+      const response = await fetch(apiUrl('/products'))
       const data = await response.json()
       let fetchedProducts = data.products || []      // Apply filters
       if (filters.category && filters.category !== "all") {
@@ -90,7 +91,7 @@ function ProductsContent() {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const response = await fetch(`${process.env['NEXT_PUBLIC_API_BASE_URL']}/categories`)
+      const response = await fetch(apiUrl('/categories'))
       const data = await response.json()
       setCategories(data.categories || [])
     } catch (error) {

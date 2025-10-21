@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { apiUrl } from '@/lib/api';
 import { 
   ShoppingBag, 
   CreditCard, 
@@ -95,7 +96,7 @@ export default function CheckoutPage() {
         total,
       };
 
-      const res = await fetch(`${process.env['NEXT_PUBLIC_API_BASE_URL']}/orders`, {
+      const res = await fetch(apiUrl('/orders'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderPayload),

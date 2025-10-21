@@ -1,8 +1,9 @@
 import { notFound } from 'next/navigation';
 import { Product } from '../../../types/product';
 import ProductDetail from '@/components/ProductDetail';
+import { apiBaseUrl } from '@/lib/api';
 
-const API_BASE_URL = process.env['NEXT_PUBLIC_API_BASE_URL'] || 'http://localhost:8001/api';
+const API_BASE_URL = apiBaseUrl();
 
 interface ProductPageProps {
   params: Promise<{

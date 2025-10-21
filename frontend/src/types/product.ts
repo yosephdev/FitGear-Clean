@@ -15,6 +15,8 @@ export interface Product {
   featured?: boolean;
   created_at?: string;
   updated_at?: string;
+  on_sale?: boolean;
+  original_price?: number;
 }
 
 export interface ProductResponse {

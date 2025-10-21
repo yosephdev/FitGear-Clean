@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { apiUrl } from "@/lib/api"
 import {
   TruckIcon,
   ShieldCheckIcon,
@@ -33,7 +35,7 @@ export default function Home() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch(`${process.env['NEXT_PUBLIC_API_BASE_URL']}/products?limit=4`)
+        const response = await fetch(apiUrl('/products?limit=4'))
         const data = await response.json()
         setProducts(data.products || [])
       } catch (error) {
@@ -178,12 +180,13 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {products.map((product) => (
               <Card key={product.id} className="group overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                <div className="aspect-square overflow-hidden bg-muted" style={{ minHeight: '300px' }}>
-                  <img
-                    src={product.images[0] || "/placeholder.svg"}
+                <div className="aspect-square overflow-hidden bg-muted relative" style={{ minHeight: '300px' }}>
+                  <Image
+                    src={product.images?.[0] || "/placeholder.svg"}
                     alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    style={{ display: 'block' }}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   />
                 </div>
                 <CardContent className="p-5">

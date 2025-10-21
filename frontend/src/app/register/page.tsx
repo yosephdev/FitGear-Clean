@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { apiUrl } from '@/lib/api';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -38,7 +39,7 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${process.env['NEXT_PUBLIC_API_BASE_URL']}/auth/register`, {
+      const response = await fetch(apiUrl('/auth/register'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -207,7 +208,7 @@ export default function RegisterPage() {
                   Google
                 </Button>
                 <Button type="button" variant="outline" className="w-full">
-                  GitHub
+                  Facebook
                 </Button>
               </div>
 

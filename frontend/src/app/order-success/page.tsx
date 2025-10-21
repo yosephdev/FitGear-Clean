@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+import { apiUrl } from '@/lib/api';
 
 const getOrderStatusColor = (status: string) => {
   const colors = {
@@ -85,7 +86,7 @@ function OrderSuccessContent() {
       return;
     }
     setLoading(true);
-    fetch(`${process.env['NEXT_PUBLIC_API_BASE_URL']}/orders/${orderId}`)
+    fetch(apiUrl(`/orders/${orderId}`))
       .then(res => {
         if (!res.ok) throw new Error('Order not found');
         return res.json();

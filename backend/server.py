@@ -98,7 +98,7 @@ async def lifespan(app: FastAPI):
         logger.info("MongoDB connection closed.")
 
 
-async def setup_database(db: AsyncIOMotorClient):
+async def setup_database(db: Any):
     logger.info("Setting up database indexes and initial data...")
     # Create indexes
     await db.products.create_index([("category", 1), ("is_active", 1)])
@@ -133,12 +133,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# For Vercel: Mangum ASGI handler
-try:
-    from mangum import Mangum
-    handler = Mangum(app)
-except ImportError:
-    handler = app
+# Vercel handler is defined once at the bottom to avoid duplication
 
 # --- Middleware ---
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
@@ -213,7 +208,7 @@ class Product(BaseModel):
 
 
 # --- Dependency Injection for Database ---
-def get_db(request: Request) -> AsyncIOMotorClient:
+def get_db(request: Request) -> Any:
     if request.app.state.db is None:
         raise HTTPException(status_code=503, detail="Database not connected")
     return request.app.state.db
@@ -235,7 +230,7 @@ def create_access_token(data: dict):
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-async def get_user_by_id(db: AsyncIOMotorClient, user_id: str):
+async def get_user_by_id(db: Any, user_id: str):
     user = await db.users.find_one({"_id": user_id})
     if not user:
         try:
@@ -247,7 +242,7 @@ async def get_user_by_id(db: AsyncIOMotorClient, user_id: str):
 
 async def get_current_user_id(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: AsyncIOMotorClient = Depends(get_db),
+    db: Any = Depends(get_db),
 ):
     try:
         payload = jwt.decode(
@@ -285,17 +280,28 @@ async def root():
 
 
 @app.get("/api/health")
-async def health_check(db: Any = Depends(get_db)):
+async def health_check(request: Request):
+    """Health check that reports app status even if DB is disconnected."""
+    db_status = "disconnected"
     try:
-        await db.command("ping")
-        return {"status": "healthy", "database": "connected"}
+        db = getattr(request.app.state, "db", None)
+        if db:
+            await db.command("ping")
+            db_status = "connected"
+        return {
+            "status": "healthy",
+            "database": db_status,
+            "timestamp": datetime.utcnow().isoformat(),
+        }
     except Exception as e:
-        logger.error(f"Health check failed: {e}")
-        raise HTTPException(status_code=503, detail="Service unavailable")
+        logger.error(f"Health check DB ping failed: {e}")
+        return {
+            "status": "healthy",
+            "database": "error",
+            "timestamp": datetime.utcnow().isoformat(),
+        }
 
-@app.get("/")
-async def root():
-    return {"message": "FitGear API is running!", "version": "1.0.0"}
+# Removed duplicate root route definition
 
 # --- Order Creation Endpoint ---
 @app.post("/api/orders", response_model=OrderResponse)
@@ -351,7 +357,7 @@ async def get_order(order_id: str, db: Any = Depends(get_db)):
 
 
 @app.post("/api/auth/register")
-async def register(user: UserCreate, db: AsyncIOMotorClient = Depends(get_db)):
+async def register(user: UserCreate, db: Any = Depends(get_db)):
     existing_user = await db.users.find_one({"email": user.email})
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -374,7 +380,7 @@ async def register(user: UserCreate, db: AsyncIOMotorClient = Depends(get_db)):
 
 
 @app.post("/api/auth/login")
-async def login(form_data: UserLogin, db: AsyncIOMotorClient = Depends(get_db)):
+async def login(form_data: UserLogin, db: Any = Depends(get_db)):
     user = await db.users.find_one({"email": form_data.email})
     if not user or not verify_password(form_data.password, user["password"]):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
@@ -386,7 +392,7 @@ async def login(form_data: UserLogin, db: AsyncIOMotorClient = Depends(get_db)):
 @app.get("/api/auth/me")
 async def get_current_user_profile(
     user_id: str = Depends(get_current_user_id),
-    db: AsyncIOMotorClient = Depends(get_db),
+    db: Any = Depends(get_db),
 ):
     user = await get_user_by_id(db, user_id)
     return {
@@ -400,7 +406,7 @@ async def get_current_user_profile(
 
 @app.get("/api/products")
 async def get_products(
-    db: AsyncIOMotorClient = Depends(get_db),
+    db: Any = Depends(get_db),
     category: Optional[str] = None,
     search: Optional[str] = None,
     limit: int = 50,
@@ -426,7 +432,7 @@ async def get_products(
 
 
 @app.get("/api/products/{product_id}")
-async def get_product(product_id: str, db: AsyncIOMotorClient = Depends(get_db)):
+async def get_product(product_id: str, db: Any = Depends(get_db)):
     product = await db.products.find_one({"_id": product_id, "is_active": True})
     if not product:
         try:
@@ -449,13 +455,13 @@ async def get_product(product_id: str, db: AsyncIOMotorClient = Depends(get_db))
 
 
 @app.get("/api/categories")
-async def get_categories(db: AsyncIOMotorClient = Depends(get_db)):
+async def get_categories(db: Any = Depends(get_db)):
     categories = await db.products.distinct("category", {"is_active": True})
     return {"categories": sorted(categories)}
 
 
 @app.get("/api/blog")
-async def get_blog_posts(db: AsyncIOMotorClient = Depends(get_db)):
+async def get_blog_posts(db: Any = Depends(get_db)):
     posts = await db.blog_posts.find({"is_published": True}).to_list(length=100)
     for p in posts:
         p["id"] = str(p["_id"])
@@ -471,7 +477,7 @@ async def get_blog_posts(db: AsyncIOMotorClient = Depends(get_db)):
 
 
 @app.get("/api/blog/{post_id}")
-async def get_blog_post(post_id: str, db: AsyncIOMotorClient = Depends(get_db)):
+async def get_blog_post(post_id: str, db: Any = Depends(get_db)):
     post = await db.blog_posts.find_one({"_id": post_id})
     if not post:
         try:
@@ -512,7 +518,7 @@ async def create_payment_intent(request: Request):
 
 
 @app.post("/api/payment/confirm")
-async def confirm_payment(request: Request, db: AsyncIOMotorClient = Depends(get_db)):
+async def confirm_payment(request: Request, db: Any = Depends(get_db)):
     try:
         data = await request.form()
         payment_intent_id = data.get("payment_intent_id")

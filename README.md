@@ -1,243 +1,161 @@
-# FitGear
+# FitGear 💪
 
-FitGear is a modern e-commerce platform designed for sports equipment enthusiasts. The platform provides a seamless shopping experience for fitness gear, workout equipment, and accessories with a powerful backend API and responsive React frontend.
+[![Live Demo](https://img.shields.io/badge/demo-live-success)](https://frontend-iota-seven-68.vercel.app/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-[Try FitGear Live](https://yosephdev.github.io/fit-gear/)
+FitGear is a modern, full-stack e-commerce platform for sports equipment and fitness gear. Built with FastAPI, MongoDB, Next.js 15, and TypeScript, it delivers a seamless shopping experience with real-time inventory management, secure payments, and an intuitive user interface.
 
-![FitGear App Preview](/fitgear-preview.png)
-
-## ✨ Features
-
-- **🛍️ Product Listings:** Browse a variety of sports equipment with detailed descriptions, prices, and ratings
-- **📂 Product Categories:** Organized items by categories like strength training and fitness accessories
-- **🛒 Shopping Cart:** Add, update, and review items with real-time inventory management
-- **⭐ User Reviews:** Share and read product reviews with 5-star rating system
-- **📝 Blog:** Feature articles on fitness tips, workout routines, and gear recommendations
-- **📱 Responsive Design:** Full compatibility across desktops, tablets, and mobile devices
-- **🔐 Secure Authentication:** JWT-based user authentication and authorization
-- **💳 Payment Integration:** Stripe payment processing for secure transactions
-- **👨‍💼 Admin Panel:** Product and user management with admin dashboard
-
-
-# FitGear
-
-FitGear is a modern e-commerce platform for sports equipment enthusiasts, featuring a robust FastAPI backend (deployed on Railway with MongoDB) and a Next.js frontend with Stripe payments and a custom API helper.
-
-[Live Demo](https://fitgear.com) <!-- Update with your production URL -->
+**[🚀 Try Live Demo](https://frontend-iota-seven-68.vercel.app/)**
 
 ![FitGear App Preview](/fitgear-preview.png)
 
-## ✨ Features
+## ✨ Key Features
 
-- **Product Listings:** Browse sports equipment with details, prices, and ratings
-- **Product Categories:** Organized by type (e.g., strength, accessories)
-- **Shopping Cart:** Add, update, and review items
-- **User Reviews:** 5-star rating system
-- **Blog:** Fitness tips and gear recommendations
-- **Responsive Design:** Works on desktop, tablet, and mobile
-- **Secure Authentication:** JWT-based user auth
-- **Stripe Payments:** Secure checkout
-- **Admin Panel:** Product/user management
+- 🛍️ **Product Catalog** - Browse extensive fitness equipment with detailed specs, pricing, and ratings
+- 📂 **Smart Categories** - Organized product categories (strength training, cardio, accessories, apparel, nutrition)
+- 🛒 **Shopping Cart** - Real-time cart management with inventory validation
+- ⭐ **Reviews & Ratings** - User-generated reviews with 5-star rating system
+- 📝 **Blog & Content** - Fitness tips, workout guides, and gear recommendations
+- 📱 **Responsive Design** - Optimized for desktop, tablet, and mobile devices
+- 🔐 **Secure Authentication** - JWT-based authentication with bcrypt password hashing
+- 💳 **Stripe Integration** - Secure payment processing with PCI compliance
+- 👨‍💼 **Admin Dashboard** - Product and user management interface
+- 🚀 **High Performance** - Server-side rendering with Next.js 15 App Router
 
 ## 🛠️ Tech Stack
 
 ### Backend
-- **FastAPI** (Python 3.9+) — async API framework
-- **MongoDB** — cloud NoSQL database (Railway)
-- **Motor** — async MongoDB driver
-- **Pydantic** — data validation
-- **Mangum** — AWS Lambda compatibility
-- **Uvicorn** — ASGI server
-- **Python-dotenv, Passlib, Stripe, Email-validator**
+
+- **[FastAPI](https://fastapi.tiangolo.com/)** 0.104.1 - Modern async Python web framework
+- **[MongoDB](https://www.mongodb.com/)** - NoSQL database (Railway hosted)
+- **[Motor](https://motor.readthedocs.io/)** 3.3.2 - Async MongoDB driver
+- **[Pydantic](https://pydantic.dev/)** 2.5.0 - Data validation with Python type hints
+- **[Uvicorn](https://www.uvicorn.org/)** 0.24.0 - Lightning-fast ASGI server
+- **[Mangum](https://mangum.io/)** 0.17.0 - AWS Lambda adapter for ASGI apps
+- **[Stripe](https://stripe.com/)** 5.1.1 - Payment processing
+- **Additional:** Python-jose, Passlib[bcrypt], Python-dotenv, Email-validator
 
 ### Frontend
-- **Next.js 15** — React framework (App Router)
-- **TypeScript** — static typing
-- **Tailwind CSS** — utility-first styling
-- **Radix UI, Lucide-react** — UI components/icons
-- **Stripe** — payment integration
-- **Custom API Helper** — dynamic API URL management
+
+- **[Next.js](https://nextjs.org/)** 15.5.6 - React framework with App Router
+- **[React](https://react.dev/)** 19.1.0 - UI library with hooks
+- **[TypeScript](https://www.typescriptlang.org/)** 5.x - Type-safe JavaScript
+- **[Tailwind CSS](https://tailwindcss.com/)** 4.x - Utility-first CSS framework
+- **[Radix UI](https://www.radix-ui.com/)** - Accessible component primitives
+- **[Lucide React](https://lucide.dev/)** - Beautiful icon library
+- **[Sonner](https://sonner.emilkowal.ski/)** - Toast notifications
+- **[React Icons](https://react-icons.github.io/react-icons/)** - Icon library
+
+### Deployment & Infrastructure
+
+- **Frontend:** Vercel (optimized for Next.js)
+- **Backend:** Railway (with MongoDB provisioning)
+- **Payment:** Stripe (PCI-compliant processing)
 
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Python 3.9+
 - Node.js 18+
 - Railway account (for backend deployment)
 - Git
 
 ### 1. Clone the Repository
+
 ```bash
-git clone <your-repo-url>
-cd fit-gear
+git clone https://github.com/yosephdev/FitGear.git
+cd FitGear
 ```
 
 ### 2. Backend Setup
+
 ```bash
 cd backend
+
 # Create and activate virtual environment
 python3 -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
 # Install dependencies
 pip install -r requirements.txt
-# Start local MongoDB (or connect to Railway)
-./mongodb.sh start
-# Start FastAPI server
-uvicorn server:app --host 0.0.0.0 --port 8001
-```
-Backend runs at: http://localhost:8001
 
-#### Railway Deployment
-- Push backend to Railway and set environment variables (see `ENV_SETUP.md`)
-- MongoDB is provisioned by Railway
+# Configure environment variables
+cp .env.example .env
+# Edit .env with your MongoDB URI, JWT secret, Stripe keys, etc.
+
+# Start local MongoDB (optional, if not using Railway)
+./mongodb.sh start
+
+# Start FastAPI server
+uvicorn server:app --host 0.0.0.0 --port 8001 --reload
+```
+
+**Backend runs at:** <http://localhost:8001>
+
+- **API Docs:** <http://localhost:8001/docs> (Swagger UI)
+- **Health Check:** <http://localhost:8001/api/health>
 
 ### 3. Frontend Setup
+
 ```bash
 cd frontend
+
+# Install dependencies
 npm install
+
+# Configure environment variables
+cp .env.example .env.local
+# Edit .env.local with your API URL and Stripe public key
+
+# Start development server
 npm run dev
 ```
-Frontend runs at: http://localhost:3000
 
-### 4. Environment Configuration
-Copy and configure environment files:
-```bash
-# Backend
-cp backend/.env.example backend/.env
-# Frontend
-cp frontend/.env.example frontend/.env
+**Frontend runs at:** <http://localhost:3000>
+
+### 4. Environment Variables
+
+**Backend (`.env`):**
+
+```env
+MONGODB_URI=mongodb://localhost:27017/fitgear
+JWT_SECRET_KEY=your-secret-key-here
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+ADMIN_EMAIL=admin@fitgear.com
+ADMIN_PASSWORD=secure-password
 ```
-See [ENV_SETUP.md](docs/ENV_SETUP.md) for details.
+
+**Frontend (`.env.local`):**
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8001
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+```
+
+See [docs/ENV_SETUP.md](docs/ENV_SETUP.md) for detailed configuration.
 
 ## 📚 API Documentation
 
-Key Endpoints:
-- `GET /api/health` — Health check
-- `GET /api/products` — List products
-- `GET /api/categories` — Product categories
-- `POST /api/auth/register` — Register
-- `POST /api/auth/login` — Login
-- `GET /api/cart` — User cart
-- `GET /api/blog` — Blog posts
+### Core Endpoints
 
-See [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md) for full details.
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/health` | Health check endpoint |
+| GET | `/api/products` | List all products (with filtering & pagination) |
+| GET | `/api/products/{id}` | Get product by ID |
+| GET | `/api/categories` | List all product categories |
+| POST | `/api/auth/register` | User registration |
+| POST | `/api/auth/login` | User authentication (returns JWT) |
+| GET | `/api/cart` | Get user's shopping cart |
+| POST | `/api/cart/add` | Add item to cart |
+| GET | `/api/blog` | List blog posts |
+| GET | `/api/orders` | List user orders |
 
-## 🗂️ Project Structure
+**Interactive API Documentation:** Visit `http://localhost:8001/docs` when running locally
 
-```
-fit-gear/
-├── backend/                 # FastAPI backend
-│   ├── server.py           # Main FastAPI app
-│   ├── requirements.txt   # Python dependencies
-│   ├── start_server.sh   # Server startup script
-│   ├── mongodb.sh        # MongoDB management
-│   └── test_api.sh       # API testing script
-├── frontend/              # Next.js frontend
-│   ├── src/
-│   │   ├── app/           # App router pages/components
-│   │   ├── components/    # UI components
-│   │   ├── context/       # Context providers
-│   │   ├── lib/           # API helpers
-│   │   └── types/         # TypeScript types
-│   ├── public/            # Static assets (add favicon.ico here)
-│   └── package.json       # Node.js dependencies
-├── docs/                  # Documentation
-└── README.md              # This file
-```
-
-## 👨‍💼 Admin Access
-
-Default admin account is created on setup. Credentials are not public—contact admin for access.
-
-## 🔐 Security Features
-
-- JWT authentication
-- Password hashing (bcrypt)
-- CORS protection
-- Input validation (Pydantic)
-- Stripe secure payments
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-FitGear is released under the MIT License. See [LICENSE](LICENSE) for details.
-
-## 📞 Contact
-
-For questions, suggestions, or contributions:
-- **Developer:** [Yoseph Berhane](mailto:contact@yoseph.dev)
-- **GitHub:** [GitHub Profile](https://github.com/yosephdev)
-
-## 🙏 Acknowledgments
-
-- Built with [FastAPI](https://fastapi.tiangolo.com/)
-- Frontend powered by [Next.js](https://nextjs.org/)
-- Styled with [Tailwind CSS](https://tailwindcss.com/)
-- Database: [MongoDB](https://www.mongodb.com/)
-- Payment: [Stripe](https://stripe.com/)
-
----
-
-**Status:** ✅ **Production Ready** — Backend (FastAPI, Railway, MongoDB) and frontend (Next.js, Stripe) are fully functional!
-### 2. Backend Setup
-
-```bash
-# Configure Python environment (virtual environment will be created automatically)
-cd backend
-
-# Install dependencies and start MongoDB + server
-./start_server.sh
-```
-
-The backend will be available at: <http://localhost:8001>
-
-- API Documentation: <http://localhost:8001/api/docs>
-- Health Check: <http://localhost:8001/api/health>
-
-### 3. Frontend Setup
-
-```bash
-# In a new terminal
-cd frontend
-npm install
-npm start
-```
-
-The frontend will be available at: <http://localhost:3000>
-
-### 4. Environment Configuration
-
-Copy and configure environment files:
-
-```bash
-# Backend
-cp backend/.env.example backend/.env
-
-# Frontend  
-cp frontend/.env.example frontend/.env
-```
-
-See [ENV_SETUP.md](ENV_SETUP.md) for detailed configuration instructions.
-
-## 📚 API Documentation
-
-### Available Endpoints
-
-- **GET /api/health** - Health check
-- **GET /api/products** - List products with filtering and pagination
-- **GET /api/categories** - Product categories
-- **POST /api/auth/register** - User registration
-- **POST /api/auth/login** - User authentication
-- **GET /api/cart** - User's shopping cart
-- **GET /api/blog** - Blog posts
-- **GET /api/orders** - User orders
+See [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md) for complete API reference.
 
 ### Testing the API
 
@@ -246,99 +164,136 @@ cd backend
 ./test_api.sh
 ```
 
-## 🔧 Development
-
-### Backend Development
-
-```bash
-cd backend
-
-# Start server with auto-reload
-./start_server.sh
-
-# Manage MongoDB
-./mongodb.sh start|stop|restart|status|logs|shell
-
-# Test API endpoints
-./test_api.sh
-```
-
-### Frontend Development
-
-```bash
-cd frontend
-
-# Start development server
-npm start
-
-# Build for production
-npm run build
-
-# Run tests
-npm test
-```
-
 ## 🗂️ Project Structure
 
-```
+```plaintext
 fit-gear/
-├── backend/                 # FastAPI backend
-│   ├── server.py           # Main FastAPI application
-│   ├── .env               # Environment variables
-│   ├── requirements.txt   # Python dependencies
-│   ├── start_server.sh   # Server startup script
-│   ├── mongodb.sh        # MongoDB management
-│   └── test_api.sh       # API testing script
-├── frontend/              # React frontend
+├── backend/                    # FastAPI backend
+│   ├── server.py              # Main FastAPI application
+│   ├── requirements.txt       # Python dependencies
+│   ├── .env                   # Environment variables (not in repo)
+│   ├── start_server.sh        # Server startup script
+│   ├── mongodb.sh             # MongoDB management script
+│   ├── test_api.sh            # API testing script
+│   └── api/                   # API modules
+│       ├── main.py
+│       └── ...
+├── frontend/                   # Next.js frontend
 │   ├── src/
-│   │   ├── components/   # React components
-│   │   ├── pages/       # Page components
-│   │   ├── context/     # Context providers
-│   │   └── services/    # API services
-│   ├── public/          # Static assets
-│   └── package.json     # Node.js dependencies
-├── ENV_SETUP.md          # Environment setup guide
-└── README.md            # This file
+│   │   ├── app/               # Next.js App Router pages
+│   │   │   ├── layout.tsx
+│   │   │   ├── page.tsx
+│   │   │   ├── products/
+│   │   │   ├── cart/
+│   │   │   └── checkout/
+│   │   ├── components/        # React components
+│   │   │   ├── Header.tsx
+│   │   │   ├── Footer.tsx
+│   │   │   ├── ProductCard.tsx
+│   │   │   └── ui/            # Radix UI components
+│   │   ├── context/           # React Context providers
+│   │   │   └── CartContext.tsx
+│   │   ├── lib/               # Utilities and helpers
+│   │   │   ├── api.ts         # API helper functions
+│   │   │   └── utils.ts
+│   │   └── types/             # TypeScript type definitions
+│   │       └── product.ts
+│   ├── public/                # Static assets
+│   │   ├── logo-fit-gear.png
+│   │   └── ...
+│   ├── package.json           # Node.js dependencies
+│   ├── tsconfig.json          # TypeScript configuration
+│   ├── tailwind.config.ts     # Tailwind CSS config
+│   └── next.config.js         # Next.js configuration
+├── docs/                       # Documentation
+│   ├── API_DOCUMENTATION.md
+│   ├── ENV_SETUP.md
+│   └── DEPLOYMENT_VERCEL.md
+├── LICENSE                     # MIT License
+└── README.md                   # This file
 ```
 
 ## 👨‍💼 Admin Access
 
-A default admin account is created automatically during initial setup. For security reasons, the admin credentials are not displayed publicly.
+A default admin account is created automatically during initial database setup.
 
-⚠️ **Important:** Contact the system administrator for admin access credentials.
+⚠️ **Security Notice:** Admin credentials are not stored in this repository. Contact the system administrator for admin access.
 
 ## 🔐 Security Features
 
-- JWT-based authentication
-- Password hashing with bcrypt
-- CORS protection
-- Input validation with Pydantic
-- Rate limiting
-- Secure payment processing with Stripe
+- ✅ **JWT Authentication** - Secure token-based authentication
+- ✅ **Password Hashing** - Bcrypt encryption for user passwords
+- ✅ **CORS Protection** - Configured cross-origin resource sharing
+- ✅ **Input Validation** - Pydantic models for request validation
+- ✅ **Stripe Integration** - PCI-compliant payment processing
+- ✅ **Environment Variables** - Sensitive data stored securely
+
+## 🚀 Deployment
+
+### Frontend (Vercel)
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+cd frontend
+vercel --prod
+```
+
+### Backend (Railway)
+
+1. Create a new project on [Railway](https://railway.app/)
+2. Connect your GitHub repository
+3. Add MongoDB service from Railway's database menu
+4. Set environment variables in Railway dashboard
+5. Deploy automatically on push to main branch
+
+See [docs/DEPLOYMENT_VERCEL.md](docs/DEPLOYMENT_VERCEL.md) for detailed deployment instructions.
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+We welcome contributions! Please follow these steps:
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/AmazingFeature`)
+3. **Commit** your changes (`git commit -m 'Add some AmazingFeature'`)
+4. **Push** to the branch (`git push origin feature/AmazingFeature`)
+5. **Open** a Pull Request
+
+Please ensure your code follows the project's coding standards and includes appropriate tests.
 
 ## 📄 License
 
-FitGear is released under the MIT License. See [LICENSE](LICENSE) for details.
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
-## 📞 Contact
+## 📞 Contact & Support
 
-For questions, suggestions, or contributions:
+**Developer:** [Yoseph Berhane](https://github.com/yosephdev)
 
-- **Developer:** [Yoseph Berhane](mailto:contact@yoseph.dev)
-- **GitHub:** [GitHub Profile](https://github.com/yosephdev)
+- 📧 Email: <contact@yoseph.dev>
+- 🐙 GitHub: [@yosephdev](https://github.com/yosephdev)
+- 💼 LinkedIn: [Yoseph Berhane](https://www.linkedin.com/in/yoseph-berhane)
+
+For bug reports and feature requests, please [open an issue](https://github.com/yosephdev/FitGear/issues).
 
 ## 🙏 Acknowledgments
 
-- Built with [FastAPI](https://fastapi.tiangolo.com/)
-- Frontend powered by [React](https://reactjs.org/)
-- Styled with [Tailwind CSS](https://tailwindcss.com/)
-- Database: [MongoDB](https://www.mongodb.com/)
-- Payment processing: [Stripe](https://stripe.com/)
+- [FastAPI](https://fastapi.tiangolo.com/) - Modern Python web framework
+- [Next.js](https://nextjs.org/) - The React framework for production
+- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
+- [MongoDB](https://www.mongodb.com/) - NoSQL database
+- [Stripe](https://stripe.com/) - Payment processing platform
+- [Railway](https://railway.app/) - Deployment infrastructure
+- [Vercel](https://vercel.com/) - Frontend hosting
+
+---
+
+<div align="center">
+
+**⭐ Star this repository if you find it helpful!**
+
+Made with ❤️ by [Yoseph Berhane](https://github.com/yosephdev)
+
+</div>
+

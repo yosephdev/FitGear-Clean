@@ -1,7 +1,9 @@
 'use client';
+/* eslint-disable @next/next/no-img-element */
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import {
@@ -40,6 +42,7 @@ const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [cartIsAnimated, setCartIsAnimated] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showAd, setShowAd] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const { cartItems } = useCart();
   const itemCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
@@ -57,6 +60,21 @@ const Header = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Initialize full-screen ad only on home page and lock body scroll when visible
+  useEffect(() => {
+    setShowAd(pathname === '/');
+  }, [pathname]);
+
+  useEffect(() => {
+    if (showAd) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [showAd]);
 
   // Cart animation
   useEffect(() => {
@@ -97,7 +115,8 @@ const Header = () => {
     router.push('/');
   };
 
-  const navLinks = [
+  type NavLink = { name: string; href: string; badge?: string | number };
+  const navLinks: NavLink[] = [
     { name: 'Home', href: '/' },
     { name: 'Products', href: '/products' },
     { name: 'Deals', href: '/deals', badge: 'HOT' },
@@ -105,10 +124,10 @@ const Header = () => {
   ];
 
   const categories = [
-    { name: 'Electronics', href: '/products?category=electronics', icon: DevicePhoneMobileIcon },
-    { name: 'Computers', href: '/products?category=computers', icon: ComputerDesktopIcon },
-    { name: 'Home & Garden', href: '/products?category=home', icon: CubeIcon },
-    { name: 'Fashion', href: '/products?category=fashion', icon: ShoppingBagIcon },
+     { name: 'Strength Training', href: '/products?category=Strength%20Training', icon: CubeIcon },
+     { name: 'Cardio Equipment', href: '/products?category=Cardio%20Equipment', icon: DevicePhoneMobileIcon },
+     { name: 'Fitness Accessories', href: '/products?category=Fitness%20Accessories', icon: ShoppingBagIcon },
+     { name: 'Yoga & Pilates', href: '/products?category=Yoga%20%26%20Pilates', icon: ComputerDesktopIcon },
   ];
 
   const isActiveLink = (href: string) => {
@@ -123,34 +142,62 @@ const Header = () => {
         : 'bg-white border-b border-gray-100'
     }`}>
       <div className="container mx-auto">
-        {/* Top Announcement Bar */}
-        <div className="bg-gradient-to-r from-primary-500 to-primary-600 text-white py-2 px-4 text-sm text-center">
-          <p className="flex items-center justify-center gap-2">
-            <span className="animate-pulse">🎉</span>
-            Free shipping on orders over $100! 
-            <Link href="/products" className="underline font-semibold ml-1 hover:no-underline">
-              Shop Now
-            </Link>
-          </p>
-        </div>
+        {/* Full-screen Ad Banner (only on home page) */}
+        {showAd && (
+          <div className="fixed inset-0 z-[60] bg-gradient-to-br from-primary-600 to-primary-700 text-white flex items-center justify-center p-6">
+            <button
+              aria-label="Close advertisement"
+              onClick={() => setShowAd(false)}
+              className="absolute top-4 right-4 p-2 rounded-full bg-white/20 hover:bg-white/30 transition"
+            >
+              <XMarkIcon className="h-6 w-6" />
+            </button>
+            <div className="max-w-3xl text-center space-y-6">
+              <Image
+                src="/logo-fit-gear.png"
+                alt="FitGear Logo"
+                width={120}
+                height={120}
+                priority
+                className="mx-auto object-contain drop-shadow-md"
+              />
+              <h2 className="text-4xl md:text-5xl font-extrabold">Big Savings Event</h2>
+              <p className="text-lg md:text-xl text-white/90">Free shipping on orders over $100. Limited time only.</p>
+              <div className="flex items-center justify-center gap-3">
+                <Link
+                  href="/products"
+                  className="px-6 py-3 rounded-lg bg-white text-primary-700 font-semibold hover:bg-white/90 transition"
+                  onClick={() => setShowAd(false)}
+                >
+                  Shop Now
+                </Link>
+                <button
+                  onClick={() => setShowAd(false)}
+                  className="px-6 py-3 rounded-lg border border-white/40 hover:bg-white/10 transition"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
-        <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
+  <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3">
           {/* Logo */}
           <div className="flex items-center">
             <Link 
               href="/" 
-              className="flex items-center space-x-3 group"
+              className="flex items-center group"
               onClick={() => setIsMenuOpen(false)}
             >
               <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300">
-                  <span className="text-white font-bold text-lg">F</span>
-                </div>
-                <div className="absolute -inset-1 bg-primary-500 rounded-xl opacity-0 group-hover:opacity-20 blur transition-opacity duration-300" />
+                <img
+                  src="/logo-fit-gear.png"
+                  alt="FitGear Logo"
+                  className="block object-contain drop-shadow"
+                />
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-primary-600 bg-clip-text text-transparent font-heading">
-                FitGear
-              </span>
+              {/* Logo only; brand text removed per request */}
             </Link>
           </div>
 

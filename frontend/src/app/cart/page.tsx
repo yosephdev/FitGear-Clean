@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
+import { toast } from 'sonner';
 
 export default function CartPage() {
   const { cartItems, removeFromCart, updateQuantity, clearCart } = useCart();
@@ -52,6 +53,9 @@ export default function CartPage() {
   const handleClearCart = async () => {
     if (confirm('Are you sure you want to clear your cart?')) {
       await clearCart();
+      toast.success('Cart cleared', {
+        description: 'All items have been removed from your cart.',
+      });
     }
   };
 

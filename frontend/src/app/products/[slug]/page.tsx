@@ -25,7 +25,8 @@ async function getProduct(id: string): Promise<Product | null> {
       return null;
     }
     
-    return await res.json();
+    const data = await res.json();
+    return data.product || data;
   } catch (error) {
     console.error('Error fetching product:', error);
     return null;

@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @next/next/no-img-element */
 
 import Link from 'next/link';
 import React, { useState } from 'react';
@@ -145,19 +146,15 @@ const Footer = () => {
         <div className="py-16 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-6 gap-8 lg:gap-12">
           {/* Company Info */}
           <div className="xl:col-span-2 space-y-6">
-            <div className="flex items-center space-x-3 group">
+              <div className="flex items-center space-x-2 group">
               <div className="relative">
-                <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300">
-                  <span className="text-white font-bold text-xl">F</span>
-                </div>
-                <div className="absolute -inset-1 bg-primary-500 rounded-xl opacity-0 group-hover:opacity-20 blur transition-opacity duration-300" />
+                  <img
+                    src="/logo-fit-gear.png"
+                    alt="FitGear Logo"
+                    className="block object-contain"
+                  />
               </div>
-              <div>
-                <span className="text-2xl font-bold bg-gradient-to-r from-white to-primary-200 bg-clip-text text-transparent font-heading">
-                  FitGear
-                </span>
-                <p className="text-sm text-primary-300 mt-1">Elevate Your Fitness Journey</p>
-              </div>
+                {/* Logo only; brand text removed per request */}
             </div>
             
             <p className="text-gray-300 text-lg leading-relaxed max-w-md">

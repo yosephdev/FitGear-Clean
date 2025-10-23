@@ -7,7 +7,7 @@ from typing import Optional, List, Any
 
 import stripe
 from bson import ObjectId
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,7 +20,19 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr, Field
 
-load_dotenv()
+# Load environment variables from .env.local first (if present), then .env.
+# This allows using a repo-root .env.local without copying it into backend/.
+try:
+    # Search upwards from current working directory (backend/) to repo root
+    env_local_path = find_dotenv('.env.local', usecwd=True)
+    if env_local_path:
+        load_dotenv(env_local_path, override=False)
+    env_path = find_dotenv('.env', usecwd=True)
+    if env_path:
+        load_dotenv(env_path, override=False)
+except Exception:
+    # Fallback to default behavior if find_dotenv isn't available or any issue occurs
+    load_dotenv()
 
 # --- Order Models ---
 class OrderItem(BaseModel):

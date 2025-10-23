@@ -183,7 +183,7 @@ sample_products = [
         "price": 59.99,
         "category": "Apparel",
         "brand": "ZenFit",
-        "images": ["/frontend/src/assets/images/yoga-pant.jpg"],
+        "images": ["/frontend/src/assets/images/smart-jump-rope.jpg"],
         "inventory": 60,
         "rating": 4.8,
         "reviews_count": 95,

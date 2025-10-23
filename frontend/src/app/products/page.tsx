@@ -17,6 +17,7 @@ import { apiUrl } from "@/lib/api"
 
 interface Product {
   id: string
+  slug?: string
   name: string
   price: number
   category: string
@@ -142,7 +143,7 @@ function ProductsContent() {
 
   const ProductCard = ({ product }: { product: Product }) => (
     <Card className="group overflow-hidden border-border hover:border-primary transition-all duration-300">
-      <Link href={`/products/${product.id}`}>
+      <Link href={`/products/${product.slug || product.id}`}>
         <div className="relative aspect-square overflow-hidden bg-muted" style={{ minHeight: '300px' }}>
           <Image
             src={product.images[0] || "/placeholder.svg"}
@@ -188,7 +189,7 @@ function ProductsContent() {
   const ProductListItem = ({ product }: { product: Product }) => (
     <Card className="group overflow-hidden border-border hover:border-primary transition-all duration-300">
       <div className="flex flex-col sm:flex-row">
-        <Link href={`/products/${product.id}`} className="relative w-full sm:w-48 aspect-square sm:aspect-auto" style={{ minHeight: '200px' }}>
+        <Link href={`/products/${product.slug || product.id}`} className="relative w-full sm:w-48 aspect-square sm:aspect-auto" style={{ minHeight: '200px' }}>
           <Image 
             src={product.images[0] || "/placeholder.svg"} 
             alt={product.name} 
@@ -200,7 +201,7 @@ function ProductsContent() {
         <div className="flex-1 p-6">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div className="flex-1">
-              <Link href={`/products/${product.id}`}>
+              <Link href={`/products/${product.slug || product.id}`}>
                 <h3 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors mb-2">
                   {product.name}
                 </h3>

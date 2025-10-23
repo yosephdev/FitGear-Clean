@@ -20,6 +20,7 @@ import {
 
 interface Product {
   id: string
+  slug?: string
   name: string
   price: number
   category: string
@@ -102,7 +103,7 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
         {/* Video Background */}
         <video
           autoPlay
@@ -207,7 +208,7 @@ export default function Home() {
                   <div className="flex items-center justify-between">
                     <span className="text-2xl font-bold">${product.price}</span>
                     <Button size="sm" variant="ghost" asChild>
-                      <Link href={`/products/${product.id}`}>
+                      <Link href={`/products/${product.slug || product.id}`}>
                         View
                         <ArrowRightIcon className="ml-1 h-4 w-4" />
                       </Link>

@@ -183,8 +183,8 @@ const Header = () => {
         )}
 
   <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3">
-          {/* Logo */}
-          <div className="flex items-center">
+          {/* Logo - pushed to far left on mobile */}
+          <div className="flex items-center -ml-2 sm:ml-0">
             <Link 
               href="/" 
               className="flex items-center group"
@@ -194,7 +194,7 @@ const Header = () => {
                 <img
                   src="/logo-fit-gear.png"
                   alt="FitGear Logo"
-                  className="block object-contain drop-shadow"
+                  className="block object-contain drop-shadow h-10 sm:h-12 w-auto"
                 />
               </div>
               {/* Logo only; brand text removed per request */}
@@ -383,7 +383,7 @@ const Header = () => {
                   )}
                 </>
               ) : (
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1 sm:space-x-2">
                   <Link
                     href="/login"
                     className="hidden sm:block text-gray-700 hover:text-primary-600 hover:bg-gray-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
@@ -392,7 +392,7 @@ const Header = () => {
                   </Link>
                   <Link
                     href="/register"
-                    className="bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:from-primary-600 hover:to-primary-700 px-6 py-2.5 rounded-lg text-sm font-medium shadow-sm hover:shadow-md transition-all duration-200"
+                    className="bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:from-primary-600 hover:to-primary-700 px-3 py-2 sm:px-6 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium shadow-sm hover:shadow-md transition-all duration-200"
                   >
                     Sign Up
                   </Link>

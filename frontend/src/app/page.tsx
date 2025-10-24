@@ -32,6 +32,9 @@ interface Product {
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([])
+  const [email, setEmail] = useState('')
+  const [isSubscribed, setIsSubscribed] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -45,6 +48,21 @@ export default function Home() {
     }
     fetchProducts()
   }, [])
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!email) return
+
+    setIsLoading(true)
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    setIsLoading(false)
+    setIsSubscribed(true)
+    setEmail('')
+    
+    // Reset success message after 3 seconds
+    setTimeout(() => setIsSubscribed(false), 3000)
+  }
 
   const features = [
     {
@@ -281,30 +299,75 @@ export default function Home() {
       </section>
 
       {/* Newsletter */}
-      <section className="py-24 bg-muted/50">
+      <section className="py-24 bg-gradient-to-br from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-950">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <Card className="max-w-3xl mx-auto border-2">
+          <Card className="max-w-4xl mx-auto border-2 shadow-2xl overflow-hidden">
             <CardContent className="p-8 md:p-12 text-center">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-balance">Stay Updated with FitGear</h2>
-              <p className="text-lg text-muted-foreground mb-8 text-pretty leading-relaxed">
-                Get the latest fitness tips, product launches, and exclusive offers delivered to your inbox.
-              </p>
-              <form className="max-w-md mx-auto flex flex-col sm:flex-row gap-3">
-                <Input type="email" placeholder="Enter your email" className="flex-1 h-12" />
-                <Button type="submit" size="lg" className="h-12 px-8">
-                  Subscribe
-                </Button>
-              </form>
-              <div className="flex items-center justify-center gap-6 mt-8 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <CheckIcon className="w-4 h-4 text-secondary" />
-                  <span>No spam</span>
+              {isSubscribed ? (
+                <div className="space-y-6">
+                  <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
+                    <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h3 className="text-3xl font-bold">Welcome to the FitGear Family!</h3>
+                  <p className="text-lg text-muted-foreground">
+                    Thank you for subscribing. Check your email for a special welcome offer.
+                  </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <CheckIcon className="w-4 h-4 text-secondary" />
-                  <span>Unsubscribe anytime</span>
-                </div>
-              </div>
+              ) : (
+                <>
+                  <h2 className="text-3xl md:text-4xl font-bold mb-4 text-balance">
+                    Join the <span className="text-primary">FitGear</span> Community
+                  </h2>
+                  <p className="text-lg text-muted-foreground mb-8 text-pretty leading-relaxed max-w-2xl mx-auto">
+                    Get exclusive access to fitness tips, new product launches, special offers, 
+                    and members-only discounts. Join 50,000+ fitness enthusiasts.
+                  </p>
+                  <form onSubmit={handleSubscribe} className="max-w-md mx-auto flex flex-col sm:flex-row gap-3">
+                    <Input 
+                      type="email" 
+                      placeholder="Enter your email address" 
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="flex-1 h-12" 
+                    />
+                    <Button 
+                      type="submit" 
+                      size="lg" 
+                      disabled={isLoading}
+                      className="h-12 px-8 shadow-lg hover:shadow-xl transition-all duration-200"
+                    >
+                      {isLoading ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Subscribing...
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          Subscribe
+                          <ArrowRightIcon className="h-4 w-4" />
+                        </div>
+                      )}
+                    </Button>
+                  </form>
+                  <div className="flex items-center justify-center gap-6 mt-8 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <CheckIcon className="w-4 h-4 text-secondary" />
+                      <span>No spam ever</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckIcon className="w-4 h-4 text-secondary" />
+                      <span>Unsubscribe anytime</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckIcon className="w-4 h-4 text-secondary" />
+                      <span>Privacy protected</span>
+                    </div>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import Link from 'next/link';
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   PhoneIcon, 
   EnvelopeIcon, 
@@ -22,47 +22,24 @@ import {
   FaPinterest,
   FaLinkedinIn
 } from 'react-icons/fa';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 
 const Footer = () => {
-  const [email, setEmail] = useState('');
-  const [isSubscribed, setIsSubscribed] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const currentYear = new Date().getFullYear();
-
-  const handleSubscribe = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-
-    setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    setIsSubscribed(true);
-    setEmail('');
-    
-    // Reset success message after 3 seconds
-    setTimeout(() => setIsSubscribed(false), 3000);
-  };
 
   const footerLinks = {
     products: [
-      { name: 'Strength Training', href: '/products?category=strength', count: '24 products' },
-      { name: 'Cardio Equipment', href: '/products?category=cardio', count: '18 products' },
-      { name: 'Fitness Accessories', href: '/products?category=accessories', count: '32 products' },
-      { name: 'Workout Apparel', href: '/products?category=apparel', count: '45 products' },
-      { name: 'Nutrition & Supplements', href: '/products?category=nutrition', count: '28 products' },
+      { name: 'Strength Training', href: '/products?category=Strength%20Training', count: '3 products' },
+      { name: 'Cardio Equipment', href: '/products?category=Cardio%20Equipment', count: '2 products' },
+      { name: 'Fitness Accessories', href: '/products?category=Fitness%20Accessories', count: '3 products' },
+      { name: 'Apparel', href: '/products?category=Apparel', count: '2 products' },
     ],
     company: [
       { name: 'About Us', href: '/about', description: 'Our story and mission' },
       { name: 'Our Team', href: '/team', description: 'Meet the experts' },
       { name: 'Careers', href: '/careers', description: 'Join our team' },
-      { name: 'Press Kit', href: '/press', description: 'Media resources' },
       { name: 'Store Locator', href: '/stores', description: 'Find our stores' },
     ],
-    support: [
-      { name: 'Help Center', href: '/help', description: 'FAQ & guides' },
+    support: [     
       { name: 'Shipping Info', href: '/shipping', description: 'Delivery times & costs' },
       { name: 'Returns & Exchanges', href: '/returns', description: '30-day guarantee' },
       { name: 'Size Guide', href: '/size-guide', description: 'Find your perfect fit' },
@@ -153,8 +130,7 @@ const Footer = () => {
                     alt="FitGear Logo"
                     className="block object-contain"
                   />
-              </div>
-                {/* Logo only; brand text removed per request */}
+              </div>               
             </div>
             
             <p className="text-gray-300 text-lg leading-relaxed max-w-md">
@@ -271,69 +247,6 @@ const Footer = () => {
                 </li>
               ))}
             </ul>
-          </div>
-        </div>
-
-        {/* Newsletter Section */}
-        <div className="py-12 border-t border-gray-800">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-8 lg:p-12 border border-gray-700/50 shadow-2xl">
-              {isSubscribed ? (
-                <div className="space-y-4">
-                  <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
-                    <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <h3 className="text-2xl font-bold text-white">Welcome to the FitGear Family!</h3>
-                  <p className="text-gray-300 text-lg">
-                    Thank you for subscribing. Check your email for a special welcome offer.
-                  </p>
-                </div>
-              ) : (
-                <>
-                  <h3 className="text-3xl font-bold text-white mb-4">
-                    Join the <span className="text-primary-400">FitGear</span> Community
-                  </h3>
-                  <p className="text-gray-300 text-lg mb-8 max-w-2xl mx-auto">
-                    Get exclusive access to fitness tips, new product launches, special offers, 
-                    and members-only discounts. Join 50,000+ fitness enthusiasts.
-                  </p>
-                  <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-                    <div className="flex-1">
-                      <Input
-                        type="email"
-                        placeholder="Enter your email address"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        className="w-full bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500 h-12"
-                      />
-                    </div>
-                    <Button 
-                      type="submit" 
-                      disabled={isLoading}
-                      className="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-semibold h-12 px-8 shadow-lg hover:shadow-xl transition-all duration-200"
-                    >
-                      {isLoading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Subscribing...
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          Subscribe
-                          <ArrowRightIcon className="h-4 w-4" />
-                        </div>
-                      )}
-                    </Button>
-                  </form>
-                  <p className="text-gray-400 text-sm mt-4">
-                    No spam ever. Unsubscribe anytime. By subscribing, you agree to our Privacy Policy.
-                  </p>
-                </>
-              )}
-            </div>
           </div>
         </div>
 

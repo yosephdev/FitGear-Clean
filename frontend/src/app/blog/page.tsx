@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import Image from 'next/image';
 
 export default function BlogPage() {
   const posts = [
@@ -37,7 +38,7 @@ export default function BlogPage() {
       category: "Wellness",
       date: "October 12, 2025",
       readTime: "4 min read",
-      image: "/foam-roller.jpg"
+      image: "/smart-jump-rope.jpg"
     }
   ];
 
@@ -55,6 +56,13 @@ export default function BlogPage() {
           {posts.map((post) => (
             <Card key={post.id} className="overflow-hidden hover:shadow-lg transition-shadow">
               <div className="aspect-video bg-muted relative overflow-hidden">
+                <Image
+                  src={post.image}
+                  alt={post.title}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                 <div className="absolute bottom-4 left-4">
                   <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-semibold">
